@@ -23,6 +23,7 @@ Android/mobile
 
 
 ## Project Links
+- [Project Proposal](../../wikis/Project-Proposal)
 
 ## Planned Features
 
