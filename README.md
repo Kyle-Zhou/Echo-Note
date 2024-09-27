@@ -24,6 +24,7 @@ Android/mobile
 
 ## Project Links
 - [Project Proposal](../../wikis/Project-Proposal)
+- [Design Proposal](../../wikis/Design-Proposal)
 
 ## Planned Features
 
