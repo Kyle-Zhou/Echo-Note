@@ -1,6 +1,6 @@
-# Project Title
+# EchoNote
 
-Single-sentence description
+EchoNote is a convenient mobile app designed to help students efficiently capture and organize information presented during lectures and office hours using AI.
 
 ## Team Details
 
