@@ -1,4 +1,4 @@
-package com.example.practice
+package com.example.echonote
 
 import android.content.Context
 import android.os.Bundle
@@ -14,7 +14,6 @@ import android.widget.Toast
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import io.noties.markwon.Markwon

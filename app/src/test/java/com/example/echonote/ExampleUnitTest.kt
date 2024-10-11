@@ -1,4 +1,4 @@
-package com.example.practice
+package com.example.echonote
 
 import org.junit.Test
 
