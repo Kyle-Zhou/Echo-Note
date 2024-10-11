@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "EchoNote"
 include(":app")
- 
+include(":echonote")
