@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.practice"
+    namespace = "com.example.echonote"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.practice"
+        applicationId = "com.example.echonote"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
