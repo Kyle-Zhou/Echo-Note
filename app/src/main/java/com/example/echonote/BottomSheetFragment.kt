@@ -1,41 +1,90 @@
 package com.example.echonote
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.latex.JLatexMathPlugin
+import kotlinx.coroutines.launch
+import androidx.compose.foundation.shape.RoundedCornerShape
 
-class BottomSheetFragment : BottomSheetDialogFragment() {
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun BottomSheetFragment(summaryText: String, isLoading: Boolean, onClose: () -> Unit) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-    private lateinit var summaryText: String
-    private lateinit var markwon: Markwon
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_bottom_sheet, container, false)
-        val txtSummary = view.findViewById<TextView>(R.id.txtSummary)
-
-        // Initialize Markwon with LaTeX support
-        markwon = Markwon.builder(requireContext())
-            .usePlugin(JLatexMathPlugin.create(txtSummary.textSize, txtSummary.textSize))
+    // Initialize Markwon with LaTeX support
+    val markwon = remember {
+        Markwon.builder(context)
+            .usePlugin(JLatexMathPlugin.create(20f, 20f))
             .build()
-        // Apply Markwon to render markdown in summary text
-        markwon.setMarkdown(txtSummary, summaryText)
-
-        return view
     }
 
-    companion object {
-        fun newInstance(summary: String): BottomSheetFragment {
-            val fragment = BottomSheetFragment()
-            fragment.summaryText = summary
-            return fragment
-        }
+    ModalBottomSheetLayout(
+        sheetContent = {
+            Column(
+                modifier = Modifier
+                    .background(colorResource(id = R.color.white_variant))
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Summary",
+                    style = MaterialTheme.typography.h5,
+                    color = colorResource(id = R.color.blue)
+                )
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    AndroidView(
+                        factory = { context ->
+                            TextView(context).apply {
+                                markwon.setMarkdown(this, summaryText)
+                            }
+                        },
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Button(
+                            onClick = {
+                                onClose()
+                                coroutineScope.launch { sheetState.hide() }
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = colorResource(id = R.color.blue)
+                            ),
+                            shape = RoundedCornerShape(50)
+                        ) {
+                            Text("Echo Me", color = colorResource(id = R.color.white))
+                        }
+                    }
+                }
+            }
+        },
+        sheetState = sheetState
+    ) {
+        coroutineScope.launch { sheetState.show() }
     }
 }

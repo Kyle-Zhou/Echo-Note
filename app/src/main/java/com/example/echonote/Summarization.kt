@@ -6,6 +6,7 @@ import org.json.JSONObject
 import java.io.IOException
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.net.UnknownHostException
 
 class Summarization {
 
@@ -25,7 +26,7 @@ class Summarization {
             },
             {
               "role": "user",
-              "content": "Summarize the following lecture content into key takeaways. Highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. $sanitizedQuestion"
+              "content": "Summarize the following lecture content into key takeaways. Start with bold title(do not include the word 'title'), highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. $sanitizedQuestion"
             }
           ],
           "max_tokens": 1000,
@@ -42,10 +43,13 @@ class Summarization {
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                Log.e("API_ERROR", "Failed to summarize text!", e)
-                callback("Failed to summarize text!")
+                val errorMessage = if (e is UnknownHostException) {
+                    "Network connection error. Please check your internet connection."
+                } else {
+                    "Failed to summarize text! Error $e"
+                }
+                callback(errorMessage)
             }
-
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (!it.isSuccessful) {
@@ -55,7 +59,6 @@ class Summarization {
 
                     val responseBody = it.body?.string()
                     if (responseBody == null) {
-                        Log.e("API_ERROR", "Empty response from server")
                         callback("Empty response from server!")
                         return
                     }

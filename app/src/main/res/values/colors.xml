@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="blue">#111E62</color>
+    <color name="white">#eae2b7</color>
+    <color name="white_variant">#fffff0</color>
+    <color name="orange">#f77f00</color>
+    <color name="red">#d62828</color>
+    <color name="blue">#003049</color>
+    <color name="blue_primary_variant">#0D174F</color> <!-- Darker variant, for example -->
+    <color name="blue_secondary">#4A5FA5</color>
 </resources>

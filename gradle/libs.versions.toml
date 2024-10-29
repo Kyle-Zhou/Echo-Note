@@ -1,7 +1,9 @@
 [versions]
 agp = "8.7.0"
+appcompatVersion = "1.7.0"
+coreKtxVersion = "1.10.1"
 googleCloudSpeech = "2.0.2"
-kotlin = "1.9.24"
+kotlin = "1.9.10"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -12,10 +14,20 @@ material = "1.10.0"
 activity = "1.9.2"
 constraintlayout = "2.1.4"
 markwon = "4.6.2"
+junitKtx = "1.2.1"
+materialVersion = "1.7.4"
+ui = "1.7.4"
+uiToolingPreview = "1.7.4"
 
 [libraries]
+androidx-appcompat-v170 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-core-ktx-v1101 = { module = "androidx.core:core-ktx", version.ref = "coreKtxVersion" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
+androidx-material = { module = "androidx.compose.material:material", version.ref = "materialVersion" }
+androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "uiToolingPreview" }
 google-cloud-speech = { module = "com.google.cloud:google-cloud-speech", version.ref = "googleCloudSpeech" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -27,6 +39,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 markwon-core = { group = "io.noties.markwon", name = "core", version.ref = "markwon" }
 markwon-latex = { group = "io.noties.markwon", name = "ext-latex", version.ref = "markwon" }
 okhttp3 = { group = "com.squareup.okhttp3", name = "okhttp", version = "4.12.0" }
+androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.ref = "junitKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
