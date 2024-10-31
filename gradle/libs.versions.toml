@@ -3,7 +3,7 @@ agp = "8.7.0"
 appcompatVersion = "1.7.0"
 coreKtxVersion = "1.10.1"
 googleCloudSpeech = "2.0.2"
-kotlin = "1.9.10"
+kotlin = "2.0.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -44,4 +44,5 @@ androidx-junit-ktx = { group = "androidx.test.ext", name = "junit-ktx", version.
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
