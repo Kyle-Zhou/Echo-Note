@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    kotlin("plugin.serialization") version libs.versions.kotlin
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -76,5 +78,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0") // OkHttp library
     implementation(libs.markwon.core)  // Markwon core dependency
     implementation(libs.markwon.latex) // Markwon KaTeX extension
+    // Supabase:
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.ktor:ktor-client-android:3.0.0")
 
 }
