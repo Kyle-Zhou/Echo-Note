@@ -1,4 +1,4 @@
-package com.example.echonote.models
+package com.example.echonote.data.entities
 
 import kotlinx.serialization.Serializable
 

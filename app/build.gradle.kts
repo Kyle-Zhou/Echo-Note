@@ -70,6 +70,11 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.5.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
+    // Supabase:
+    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
+    implementation("io.github.jan-tennert.supabase:postgrest-kt")
+    implementation("io.ktor:ktor-client-android:3.0.0")
+
     // Other dependencies
     implementation("com.google.android.material:material:1.9.0")
     implementation("androidx.activity:activity-compose:1.7.2")
@@ -78,9 +83,5 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0") // OkHttp library
     implementation(libs.markwon.core)  // Markwon core dependency
     implementation(libs.markwon.latex) // Markwon KaTeX extension
-    // Supabase:
-    implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
-    implementation("io.github.jan-tennert.supabase:postgrest-kt")
-    implementation("io.ktor:ktor-client-android:3.0.0")
-
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1") // Datetime
 }
