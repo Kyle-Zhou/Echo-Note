@@ -2,8 +2,13 @@ package com.example.echonote
 
 import LeftRoundedRadioButton
 import RightRoundedRadioButton
+import android.Manifest
 import android.content.Context
+import android.media.MediaRecorder
+import android.os.Environment
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,11 +27,11 @@ import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.Color
-
+import java.io.File
 
 @Preview
 @Composable
@@ -50,16 +55,62 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
+    val mediaRecorder = remember { MediaRecorder() }
+    var outputFilePath by remember { mutableStateOf("") }
+
     fun hideKeyboard() {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow((context as android.app.Activity).currentFocus?.windowToken, 0)
+    }
+
+    fun startRecording() {
+        val fileName = "recorded_audio_${System.currentTimeMillis()}.mp4"
+        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
+        outputFilePath = file.absolutePath
+
+        mediaRecorder.apply {
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            setOutputFile(outputFilePath)
+            prepare()
+            start()
+        }
+
+        isRecording = true
+    }
+
+    fun stopRecording() {
+        mediaRecorder.apply {
+            stop()
+            reset()
+        }
+
+        isRecording = false
+
+        // display recorded text (placeholder for actual recorded text)
+        // this can be updated to play or display recorded file in future
+        coroutineScope.launch {
+            scaffoldState.snackbarHostState.showSnackbar("Recording saved: $outputFilePath")
+        }
+    }
+
+    // request audio permission for recording
+    val audioPermission = Manifest.permission.RECORD_AUDIO
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            startRecording() // start recording if permission is granted
+        } else {
+            coroutineScope.launch {
+                scaffoldState.snackbarHostState.showSnackbar("Permission denied")
+            }
+        }
     }
 
     Scaffold(
         scaffoldState = scaffoldState,
         snackbarHost = { SnackbarHost(scaffoldState.snackbarHostState) }
     ) { padding ->
-
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -81,10 +132,10 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                         .width(110.dp),
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = Color.Transparent,
-                        contentColor = Color.Transparent // If needed for icon or text
+                        contentColor = Color.Transparent
                     ),
-                    elevation = ButtonDefaults.elevation(0.dp), // Remove button shadow
-                    shape = RoundedCornerShape(50) // Optional, if you want rounded edges
+                    elevation = ButtonDefaults.elevation(0.dp),
+                    shape = RoundedCornerShape(50)
                 ) {
                     Icon(
                         Icons.Filled.ArrowBackIos,
@@ -212,7 +263,11 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                 if (isRecordMode) {
                     Button(
                         onClick = {
-                            isRecording = !isRecording
+                            if (isRecording) {
+                                stopRecording()
+                            } else {
+                                launcher.launch(audioPermission)
+                            }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
@@ -221,7 +276,7 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                             backgroundColor = if (isRecording) colorResource(id = R.color.red) else colorResource(id = R.color.blue)
                         )
                     ) {
-                        Text(if (isRecording) "Recording..." else "Record", color = colorResource(id = R.color.white))
+                        Text(if (isRecording) "Stop Recording" else "Record", color = colorResource(id = R.color.white))
                     }
                     Text(
                         recordedText,
