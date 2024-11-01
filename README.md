@@ -28,6 +28,7 @@ Android/mobile
 
 ## Releases
 - [Version 1.1.0 Release](../../wikis/Version-1.1.0-Releases)
+- [Version 1.2.0 Release](../../wikis/Version-1.2.0-Releases)
 
 ## Planned Features
 
