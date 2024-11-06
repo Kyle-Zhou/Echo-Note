@@ -1,7 +1,5 @@
-package com.example.echonote
+package com.example.echonote.ui.pages
 
-import LeftRoundedRadioButton
-import RightRoundedRadioButton
 import android.Manifest
 import android.content.Context
 import android.media.MediaRecorder
@@ -26,10 +24,14 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.rememberScaffoldState
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.echonote.R
+import com.example.echonote.resources.Summarization
+import com.example.echonote.ui.components.BottomSheetFragment
+import com.example.echonote.ui.components.LeftRoundedRadioButton
+import com.example.echonote.ui.components.RightRoundedRadioButton
 import kotlinx.coroutines.launch
 import java.io.File
 
