@@ -1,4 +1,4 @@
-package com.example.echonote
+package com.example.echonote.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -24,6 +24,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.echonote.R
+import com.example.echonote.ui.pages.AddPageScreen
+import com.example.echonote.ui.pages.HomePageScreen
+import com.example.echonote.ui.pages.TestPageScreen
 import com.example.echonote.ui.theme.EchoNoteTheme
 import kotlinx.coroutines.launch
 

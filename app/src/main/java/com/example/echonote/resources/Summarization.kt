@@ -1,4 +1,4 @@
-package com.example.echonote
+package com.example.echonote.resources
 
 import android.util.Log
 import okhttp3.*

@@ -1,4 +1,4 @@
-package com.example.echonote
+package com.example.echonote.ui.pages
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.echonote.R
 import com.example.echonote.data.entities.User
 import com.example.echonote.data.entities.Item
 import com.example.echonote.data.entities.Folder

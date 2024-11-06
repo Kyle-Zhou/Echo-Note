@@ -1,4 +1,4 @@
-package com.example.echonote
+package com.example.echonote.ui.components
 
 import android.widget.TextView
 import androidx.compose.foundation.background
@@ -15,6 +15,7 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.ext.latex.JLatexMathPlugin
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.example.echonote.R
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
