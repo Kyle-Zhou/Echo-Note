@@ -12,6 +12,7 @@ fun sanitizeInput(input: String): String {
     return input
         .replace("\\", "\\\\")  // Escape backslashes
         .replace("\"", "\\\"")  // Escape double quotes
+        .replace("\n", "")
 }
 
 
