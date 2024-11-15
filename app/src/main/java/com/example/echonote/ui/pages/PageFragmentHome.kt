@@ -1,99 +1,148 @@
 package com.example.echonote.ui.pages
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.echonote.R
-import com.example.echonote.data.entities.*
+import com.example.echonote.data.entities.Folder
+import com.example.echonote.data.entities.Item
+import com.example.echonote.data.entities.User
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.ui.draw.rotate
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
+import com.example.echonote.data.persistence.IPersistence
 import com.example.echonote.data.persistence.SupabaseClient
-import kotlinx.coroutines.launch
-import androidx.compose.runtime.*
-import kotlinx.datetime.*
-import kotlinx.serialization.json.Json
 
-fun currentMoment(): LocalDateTime {
-    return Clock.System.now().toLocalDateTime(TimeZone.UTC)
-}
+// Utility to get the current time
+fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-@Preview
 @Composable
-fun HomePageScreen() {
+fun HomePageScreen(navController: NavHostController) {
     Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
-//        TODO: Improve this code
+
+        //        TODO: Improve this code
         val users = remember { mutableStateListOf<User>() }
-        val folderModel = remember {mutableStateOf<FolderModel?>(null)}
-        val itemsModel = remember { mutableStateOf<ItemModel?>(null) }
+        var folderModel by remember {mutableStateOf<FolderModel?>(null)}
         LaunchedEffect(Unit) {
             val results = SupabaseClient.loadUsers()
             SupabaseClient.setCurrentUser(1)
             users.addAll(results)
-            folderModel.value = FolderModel(SupabaseClient, ::currentMoment)
-            itemsModel.value = ItemModel(SupabaseClient, ::currentMoment, 1)
+            folderModel = FolderModel(SupabaseClient, ::currentMoment)
             SupabaseClient.getCurrentSession()
         }
-        // TODO: change this to query for the signed in user
+
+//        var errorMessage by remember { mutableStateOf("") }
+
+        // Mock values link this with actual db
+//        val users = listOf(
+//            User(1, "Gen", "gen@gmail.com"),
+//            User(2, "Jane", "jane@gmail.com")
+//        )
+//        val mockFolders = listOf(
+//            Folder(1, 1, "CS241", "Foundations of Sequential Programs", currentMoment(), currentMoment()),
+//            Folder(2, 1, "CS346", "Application Development", currentMoment(), currentMoment())
+//        )
+//        val mockItems = listOf(
+//            Item(1, 1, "Lecture 1", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment()),
+//            Item(2, 1, "Lecture 2", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment()),
+//            Item(3, 2, "Tutorial 1", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment())
+//        )
+
+        //        // TODO: change this to query for the signed in user
         val firstUser = users.firstOrNull() // initially grab the first user in the array
-        var errorMessage by remember { mutableStateOf("") }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-//            verticalArrangement = Arrangement.Center
+                .padding(16.dp)
         ) {
-            if(errorMessage.isNotEmpty()) {
-                Text(text=errorMessage)
-            }
+            Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Hello ${firstUser?.name ?: "..."}!",
-                style = MaterialTheme.typography.h3,
+                text = "Hello ${firstUser?.name ?: "..."}! 👋",
+                style = MaterialTheme.typography.h5,
                 color = Color.White,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+                modifier = Modifier.align(Alignment.Start)
             )
-            Text(text = "Folders:",
-                style = MaterialTheme.typography.h3,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            val folders = folderModel.value?.folders ?: emptyList<Folder>()
-            for (folder in folders) {
-//                TODO: Move this to a separate composable with state and better ui
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Iterate through folders and render dropdown menus
+            (folderModel?.folders?:emptyList<Folder>()).forEach { folder ->
+                FolderDropdown(folder = folder, navController = navController)
+            }
+        }
+    }
+}
+
+@Composable
+fun FolderDropdown(folder: Folder, navController: NavHostController) {
+    var expanded by remember { mutableStateOf(false) }
+    var itemModel by remember { mutableStateOf<ItemModel?>(null) }
+    val folderId: Long = folder.id
+
+    LaunchedEffect(Unit) {
+        itemModel = ItemModel(SupabaseClient, ::currentMoment, folderId)
+    }
+    val items = itemModel?.items?:emptyList<Item>()
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = { expanded = !expanded },
+            colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.white)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowForwardIos,
+                    contentDescription = if (expanded) "Collapse" else "Expand",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .rotate(if (expanded) 90f else 0f)
+                        .align(Alignment.CenterVertically)
+                        .padding(end = if (!expanded) 8.dp else 0.dp)
+                )
                 Text(
-                    text="${folder.id} ${folder.title}",
-                    style = MaterialTheme.typography.h4,
-                    color = Color.White,
-//                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                    text = folder.title,
+                    style = MaterialTheme.typography.h6,
+                    color = Color.Black,
+                    modifier = Modifier.weight(1f).padding(start = if (expanded) 8.dp else 0.dp)
                 )
             }
-            Text(text = "Items:",
-                style = MaterialTheme.typography.h3,
-                color = Color.White,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            val items = itemsModel.value?.items ?: emptyList<Item>()
-            for (item in items) {
-//                TODO: Move this to a separate composable with state and better ui
-                Text(
-                    text="${item.id} ${item.title}",
-                    style = MaterialTheme.typography.h4,
-                    color = Color.White,
-//                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+        }
+        if (expanded) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            ) {
+                items.forEach { item ->
+                    Button(
+                        onClick = {
+                            val summary = item.summary.toString()
+                            navController.navigate("item/${folder.title}/${item.title}?summary=$summary")
+                        },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.white)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = item.title, style = MaterialTheme.typography.subtitle1, color = Color.Black)
+                    }
+                }
             }
         }
     }

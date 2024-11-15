@@ -20,18 +20,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.echonote.R
 import com.example.echonote.ui.pages.AddPageScreen
 import com.example.echonote.ui.pages.HomePageScreen
 import com.example.echonote.ui.pages.LoginPageScreen
+import com.example.echonote.ui.pages.PageFragmentItem
 import com.example.echonote.ui.pages.SignupPageScreen
 import com.example.echonote.ui.pages.TestPageScreen
 import com.example.echonote.ui.theme.EchoNoteTheme
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -90,27 +94,40 @@ fun MyApp() {
             startDestination = "login",
             Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomePageScreen() }
+            composable("home") { HomePageScreen(navController) }
             composable("add") { AddPageScreen() }
             composable("test") { TestPageScreen() }
             composable("login") {
                 LoginPageScreen(
-                    onLoginSuccess = { message ->
-                        navController.navigate("home")
-                    },
+                    onLoginSuccess = { navController.navigate("home") },
                     onNavigateToSignup = { navController.navigate("signup") }
                 )
             }
             composable("signup") {
                 SignupPageScreen(
-                    onSignupSuccess = { message ->
-                        navController.navigate("home")
-                    },
+                    onSignupSuccess = { navController.navigate("home") },
                     onNavigateToLogin = { navController.navigate("login") }
                 )
             }
+            // PageFragmentItem
+            composable(
+                route = "item/{folderTitle}/{itemTitle}?summary={summary}",
+                arguments = listOf(
+                    navArgument("folderTitle") { type = NavType.StringType },
+                    navArgument("itemTitle") { type = NavType.StringType },
+                    navArgument("summary") { type = NavType.StringType; defaultValue = "" }
+                )
+            ) { backStackEntry ->
+                val folderTitle = backStackEntry.arguments?.getString("folderTitle") ?: "Unknown Folder"
+                val itemTitle = backStackEntry.arguments?.getString("itemTitle") ?: "Unknown Item"
+                val summaryJson = backStackEntry.arguments?.getString("summary") ?: "{}"
 
+                // Parse summaryJson back to JsonElement
+                val summary = Json.parseToJsonElement(summaryJson)
+                PageFragmentItem(navController, folderTitle, itemTitle, summary)
+            }
         }
+
     }
 }
 

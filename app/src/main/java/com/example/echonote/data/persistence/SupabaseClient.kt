@@ -61,7 +61,7 @@ object SupabaseClient: IPersistence {
         getFoldersTable().upsert(folders)
     }
 
-    override suspend fun loadItems(folderId: Int): List<Item> {
+    override suspend fun loadItems(folderId: Long): List<Item> {
         return getItemsTable().select{
             filter { eq("folder_id", folderId) }
         }.decodeList<Item>()
