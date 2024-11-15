@@ -28,6 +28,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.echonote.R
+import com.example.echonote.data.entities.Folder
+import com.example.echonote.data.models.FolderModel
+import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.resources.Summarization
 import com.example.echonote.ui.components.BottomSheetFragment
 import com.example.echonote.ui.components.LeftRoundedRadioButton
@@ -42,7 +45,10 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
     var selectedOption by remember { mutableStateOf("Default") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     //  TO-DO: replace with user's db
-    val options = listOf("Default", "CS240", "CS241", "CS242")
+    val folderModel = remember {mutableStateOf<FolderModel?>(null)}
+    LaunchedEffect(Unit) {
+        folderModel.value = FolderModel(SupabaseClient, ::currentMoment)
+    }
 
     var selectedMode by remember { mutableStateOf("Record") }
     var textInput by remember { mutableStateOf("") }
@@ -186,16 +192,16 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                             .background(color = colorResource(id = R.color.white))
                             .padding(start = 5.dp)
                     ) {
-                        options.forEach { option ->
+                        (folderModel.value?.folders ?: emptyList<Folder>()).forEach { option ->
                             DropdownMenuItem(
                                 onClick = {
-                                    selectedOption = option
+                                    selectedOption = option.title
                                     isDropdownExpanded = false
                                 },
                                 modifier = Modifier.background(color = colorResource(id = R.color.white))
                             ) {
                                 Text(
-                                    option,
+                                    option.title,
                                     color = colorResource(id = R.color.blue),
                                     modifier = Modifier.fillMaxWidth()
                                 )
