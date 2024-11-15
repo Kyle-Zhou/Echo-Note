@@ -8,25 +8,32 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.net.UnknownHostException
 
-class Summarization {
+fun sanitizeInput(input: String): String {
+    return input
+        .replace("\\", "\\\\")  // Escape backslashes
+        .replace("\"", "\\\"")  // Escape double quotes
+}
 
+
+class Summarization {
+    private val url = "https://api.openai.com/v1/chat/completions"
+    private val apiKey = "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"
     private val client = OkHttpClient()
 
     fun getSummary(question: String, callback: (String) -> Unit) {
-        val sanitizedQuestion = question.trim().replace("\"", "")
-        val url = "https://api.openai.com/v1/chat/completions"
-        val apiKey = "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"
+        val sanitizedQuestion = sanitizeInput(question)
+
         val requestBody = """
         {
           "model": "gpt-4o-mini-2024-07-18",
           "messages": [
             {
               "role": "system",
-              "content": "You are a best note taker."
+              "content": "You are the best note taker."
             },
             {
               "role": "user",
-              "content": "Summarize the following lecture content into key takeaways. Start with bold title(do not include the word 'title'), highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. $sanitizedQuestion"
+              "content": "Summarize the following lecture content into key takeaways. Start with a bold title(do not include the word 'title'), highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. Here is the lecture content: $sanitizedQuestion"
             }
           ],
           "max_tokens": 1000,
