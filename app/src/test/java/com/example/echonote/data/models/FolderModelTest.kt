@@ -1,29 +1,31 @@
 package com.example.echonote.data.models
 import com.example.echonote.data.persistence.MockPersistence
-import com.example.echonote.data.entities.Folder
 import com.example.echonote.dateTimeCreator
-import com.example.echonote.dateTimeCreator2
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class FolderModelTest {
-    @Test
-    fun addGood() {
+    private suspend fun createFolderModel(): FolderModel {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
-        val newFolder = Folder(4, 1, "Add", null, dateTimeCreator2(), dateTimeCreator2())
-        folderModel.add(newFolder)
+        return folderModel
+    }
+
+    @Test
+    fun addGood() = runTest {
+        val folderModel = createFolderModel()
+        folderModel.add("Add", null)
         assertEquals(4, folderModel.folders.size)
         folderModel.save()
     }
 
     @Test
-    fun addSameId() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
-        val newFolder = Folder(1, 1, "Add", null, dateTimeCreator2(), dateTimeCreator2())
+    fun addSameTitle() = runTest {
+        val folderModel = createFolderModel()
+        println(folderModel.folders)
         try {
-            folderModel.add(newFolder)
+            folderModel.add("1", "test")
             assert(false)
         } catch (e: IllegalArgumentException) {
             assert(true)
@@ -32,34 +34,25 @@ class FolderModelTest {
     }
 
     @Test
-    fun addSameTitle() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
-        val newFolder = Folder(3, 1, "test 1", null, dateTimeCreator2(), dateTimeCreator2())
-        try {
-            folderModel.add(newFolder)
-            assert(false)
-        } catch (e: IllegalArgumentException) {
-            assert(true)
-        }
-        folderModel.save()
-    }
-
-    @Test
-    fun delGood() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
-        val localDateTime = dateTimeCreator()
-        val folder = Folder(3, 1, "3", "test 3", localDateTime, localDateTime)
-        folderModel.del(folder)
+    fun delGood() = runTest {
+        val folderModel = createFolderModel()
+        folderModel.del(3)
         assertEquals(2, folderModel.folders.size)
         folderModel.save()
     }
 
     @Test
-    fun changeTitleGood() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
+    fun delNone() = runTest {
+        val folderModel = createFolderModel()
+ // This folder hasn't been added before
+        folderModel.del(10)
+        assertEquals(3, folderModel.folders.size)
+        folderModel.save()
+    }
+
+    @Test
+    fun changeTitleGood() = runTest {
+        val folderModel = createFolderModel()
         folderModel.changeTitle(3, "Hello")
         val expectedItem = folderModel.folders[2]
         assertEquals("Hello", expectedItem.title)
@@ -68,9 +61,8 @@ class FolderModelTest {
     }
 
     @Test
-    fun changeTitleBad() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
+    fun changeTitleBad() = runTest {
+        val folderModel = createFolderModel()
         try {
             folderModel.changeTitle(3, "2") // "2" title already used
             assert(false)
@@ -81,9 +73,8 @@ class FolderModelTest {
     }
 
     @Test
-    fun changeDescriptionGood() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
+    fun changeDescriptionGood() = runTest {
+        val folderModel = createFolderModel()
         folderModel.changeDescription(1, "Change description")
         val expectedItem = folderModel.folders[0]
         assertEquals("Change description", expectedItem.description)
@@ -92,9 +83,8 @@ class FolderModelTest {
     }
 
     @Test
-    fun changeDescriptionGoodNull() {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
+    fun changeDescriptionGoodNull() = runTest {
+        val folderModel = createFolderModel()
         folderModel.changeDescription(1, null)
         val expectedItem = folderModel.folders[0]
         assertEquals(null, expectedItem.description)

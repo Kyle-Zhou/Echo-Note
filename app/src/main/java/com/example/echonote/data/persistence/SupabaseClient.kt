@@ -1,6 +1,7 @@
 package com.example.echonote.data.persistence
 
 import com.example.echonote.data.entities.Folder
+import com.example.echonote.data.entities.Item
 import com.example.echonote.data.entities.User
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
@@ -9,6 +10,8 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Count
+import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -25,6 +28,7 @@ object SupabaseClient: IPersistence {
         }
         install(Postgrest)
     }
+    private var currentUser: Int? = null
 
     override suspend fun loadUsers(): List<User> = withContext(Dispatchers.IO) {
         var list = listOf<User>()
@@ -36,18 +40,56 @@ object SupabaseClient: IPersistence {
         return@withContext list
     }
 
-    override fun loadFolders(): List<Folder> {
-        var list = listOf<Folder>()
-        runBlocking {
-            withContext(Dispatchers.IO) {
-            list = supabase.from("Folders").select().decodeList<Folder>()
-            }
-        }
-        return list
+    override fun getCurrentUser(): Int? {
+        return currentUser
     }
 
-    override fun saveFolders(folders: List<Folder>) {
-        TODO("Not yet implemented")
+    override fun setCurrentUser(userId: Int) {
+        currentUser = userId
+    }
+
+    override suspend fun loadFolders(): List<Folder> {
+        return getFoldersTable().select{
+            filter { eq("user_id", currentUser!!) }
+        }.decodeList<Folder>()
+    }
+
+    override suspend fun saveFolders(folders: List<Folder>) {
+        getFoldersTable().upsert(folders)
+    }
+
+    override suspend fun loadItems(folderId: Int): List<Item> {
+        return getItemsTable().select{
+            filter { eq("folder_id", folderId) }
+        }.decodeList<Item>()
+    }
+
+    override suspend fun saveItems(items: List<Item>) {
+        getItemsTable().upsert(items)
+    }
+
+    override suspend fun saveItem(item: Item) {
+        getItemsTable().upsert(item)
+    }
+
+    override suspend fun getFoldersCount(): Long {
+        return getFoldersTable().select{
+            count(Count.EXACT)
+        }.countOrNull()!!
+    }
+
+    override suspend fun getItemsCount(): Long {
+        return getItemsTable().select{
+            count(Count.EXACT)
+        }.countOrNull()!!
+    }
+
+    private fun getFoldersTable(): PostgrestQueryBuilder {
+        return supabase.from("Folders")
+    }
+
+    private fun getItemsTable(): PostgrestQueryBuilder {
+        return supabase.from("Items")
     }
 
     override suspend fun signupUser(userEmail: String, userPassword: String) {
