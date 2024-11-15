@@ -32,6 +32,7 @@ import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.resources.Summarization
+import com.example.echonote.resources.Transcribe
 import com.example.echonote.ui.components.BottomSheetFragment
 import com.example.echonote.ui.components.LeftRoundedRadioButton
 import com.example.echonote.ui.components.RightRoundedRadioButton
@@ -64,42 +65,69 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
     val coroutineScope = rememberCoroutineScope()
 
     val mediaRecorder = remember { MediaRecorder() }
-    var outputFilePath by remember { mutableStateOf("") }
+    val transcribe = remember { Transcribe() }
+
 
     fun hideKeyboard() {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow((context as android.app.Activity).currentFocus?.windowToken, 0)
     }
 
+    var isUploading by remember { mutableStateOf(false) }
+
+    // temporary file for storing audio recording
+    val tempFile = remember { File.createTempFile("temp_audio", ".mp4", context.cacheDir) }
+
     fun startRecording() {
-        val fileName = "recorded_audio_${System.currentTimeMillis()}.mp4"
-        val file = File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), fileName)
-        outputFilePath = file.absolutePath
-
-        mediaRecorder.apply {
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            setOutputFile(outputFilePath)
-            prepare()
-            start()
+        try {
+            mediaRecorder.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(tempFile)
+                prepare()
+                start()
+            }
+            isRecording = true
+        } catch (e: Exception) {
+            println("Failed to start recording: ${e.message}")
         }
-
-        isRecording = true
     }
 
-    fun stopRecording() {
-        mediaRecorder.apply {
-            stop()
-            reset()
-        }
+    suspend fun stopRecording() {
+        try {
+            mediaRecorder.apply {
+                stop()
+                reset()
+            }
+            isRecording = false
+            isUploading = true
 
-        isRecording = false
+            val audioByteArray = tempFile.readBytes()
 
-        // display recorded text (placeholder for actual recorded text)
-        // this can be updated to play or display recorded file in future
-        coroutineScope.launch {
-            scaffoldState.snackbarHostState.showSnackbar("Recording saved: $outputFilePath")
+            // upload to Supabase
+            val fileName = "audio_${System.currentTimeMillis()}.mp4"
+            try {
+                val audioFileUrl = SupabaseClient.uploadAudioFileAndGetUrl(fileName, audioByteArray)
+                transcribe.transcribeAudio(audioFileUrl)
+                coroutineScope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar("Recording uploaded and transcribed successfully!")
+                }
+            } catch (e: Exception) {
+                coroutineScope.launch {
+                    scaffoldState.snackbarHostState.showSnackbar("Upload failed: ${e.message}")
+                }
+            }
+
+            tempFile.delete()
+            isUploading = false
+
+        } catch (e: Exception) {
+            println("Recording Failed: ${e.message}")
+            isUploading = false
+            coroutineScope.launch {
+                scaffoldState.snackbarHostState.showSnackbar("Recording failed: ${e.message}")
+            }
         }
     }
 
@@ -272,7 +300,13 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                     Button(
                         onClick = {
                             if (isRecording) {
-                                stopRecording()
+                                coroutineScope.launch {
+                                    try {
+                                        stopRecording()
+                                    } catch (e: Exception) {
+                                        println("Recording Failed. ${e.localizedMessage}")
+                                    }
+                                }
                             } else {
                                 launcher.launch(audioPermission)
                             }

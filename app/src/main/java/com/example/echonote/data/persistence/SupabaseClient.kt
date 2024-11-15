@@ -12,9 +12,11 @@ import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
+import io.github.jan.supabase.storage.Storage
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.minutes
 
 object SupabaseClient: IPersistence {
     private val supabase = createSupabaseClient(
@@ -27,6 +29,7 @@ object SupabaseClient: IPersistence {
             minimalSettings() // disables session saving and auto-refreshing
         }
         install(Postgrest)
+        install(Storage)
     }
     private var currentUser: Int? = null
 
@@ -106,6 +109,15 @@ object SupabaseClient: IPersistence {
             password = userPassword
         }
         getCurrentSession()
+    }
+
+    suspend fun uploadAudioFileAndGetUrl(filePath: String, fileData: ByteArray) : String {
+        val bucket = supabase.storage.from("audio-storage")
+        bucket.upload(filePath, fileData) {
+            upsert = false
+        }
+        val url = bucket.createSignedUrl(path = filePath, expiresIn = 60.minutes)
+        return url
     }
 
     // Log the current session

@@ -11,7 +11,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.echonote"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
         versionName = "1.2"
@@ -76,6 +76,7 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.0.0")
     implementation("io.github.jan-tennert.supabase:auth-kt:3.0.2")
+    implementation("io.github.jan-tennert.supabase:storage-kt:3.0.2")
 
     // Other dependencies
     implementation("com.google.android.material:material:1.9.0")
