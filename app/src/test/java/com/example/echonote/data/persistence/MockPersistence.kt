@@ -19,7 +19,7 @@ class MockPersistence(private val dateTimeCreator: () -> LocalDateTime): IPersis
         return Json.decodeFromString<JsonElement>("""{"value": "$value"}""")
     }
 
-    override fun loadUsers(): List<User> {
+    override suspend fun loadUsers(): List<User> {
         TODO("Not yet implemented")
     }
 
@@ -45,8 +45,8 @@ class MockPersistence(private val dateTimeCreator: () -> LocalDateTime): IPersis
 
     }
 
-    override suspend fun loadItems(userId: Int): List<Item> {
-        return mockItems
+    override suspend fun loadItems(folderId: Long): List<Item> {
+        return mockItems.filter { it.folder_id == folderId }
     }
 
     override suspend fun saveItems(items: List<Item>) {
@@ -61,6 +61,14 @@ class MockPersistence(private val dateTimeCreator: () -> LocalDateTime): IPersis
 
     override suspend fun getFoldersCount(): Long {
         return 2
+    }
+
+    override suspend fun signupUser(userEmail: String, userPassword: String) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun loginUser(userEmail: String, userPassword: String) {
+        TODO("Not yet implemented")
     }
 
     override suspend fun getItemsCount(): Long {

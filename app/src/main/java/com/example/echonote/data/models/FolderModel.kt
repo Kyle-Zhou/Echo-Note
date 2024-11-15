@@ -49,6 +49,7 @@ class FolderModel private constructor(
 
     suspend fun del(id: Long) {
         folders.removeIf{it.id == id}
+//        TODO: Remove from db
         persistence.saveFolders(folders)
     }
 

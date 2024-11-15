@@ -17,7 +17,7 @@ interface IPersistence {
     suspend fun loadFolders(): List<Folder>
     suspend fun saveFolders(folders: List<Folder>)
 
-    suspend fun loadItems(folderId: Int): List<Item>
+    suspend fun loadItems(folderId: Long): List<Item>
     suspend fun saveItems(items: List<Item>)
     suspend fun saveItem(item: Item)
 

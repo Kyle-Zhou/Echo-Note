@@ -14,35 +14,32 @@ class ItemModelTest {
     fun addGood() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator, 1)
-        itemModel.add(2, "5 2", Json.decodeFromString("""{"value":"test 5"}"""))
-        assertEquals(5, itemModel.items.size)
-        itemModel.save()
-    }
-
-    @Test
-    fun addBadFolderId() = runTest {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        try {
-            itemModel.add(3, "5 2", Json.decodeFromString("""{"value":"test 5"}"""))
-            assert(false)
-        } catch (_: IllegalArgumentException) {
-            assert(true)
-        }
+        itemModel.add("5 2", Json.decodeFromString("""{"value":"test 5"}"""))
+        assertEquals(3, itemModel.items.size)
         itemModel.save()
     }
 
     @Test
     fun addBadTitle() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
-        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 2)
         // Title already in use in folder 2
         try {
-            itemModel.add(2, "4 2", Json.decodeFromString("""{"value":"test 5"}"""))
+            itemModel.add("4 2", Json.decodeFromString("""{"value":"test 5"}"""))
             assert(false)
         } catch (_: IllegalArgumentException) {
             assert(true)
         }
+        itemModel.save()
+    }
+
+    @Test
+    fun changeFolderNothing() = runTest {
+        val mockPersistence = MockPersistence(::dateTimeCreator)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
+        itemModel.changeFolder(2, 1)
+        val expectedItem = itemModel.items[1]
+        assertEquals(1, expectedItem.folder_id)
         itemModel.save()
     }
 
@@ -50,10 +47,8 @@ class ItemModelTest {
     fun changeFolderGood() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        itemModel.changeFolder(4, 1)
-        val expectedItem = itemModel.items[3]
-        assertEquals(1, expectedItem.folder_id)
-        assertEquals(dateTimeCreator2(), expectedItem.updated_on)
+        itemModel.changeFolder(2, 2)
+        assertEquals(1, itemModel.items.size)
         itemModel.save()
     }
 
@@ -68,13 +63,7 @@ class ItemModelTest {
         } catch (_: IllegalArgumentException) {
             assert(true)
         }
-
-        try {
-            itemModel.save()
-            assert(false)
-        } catch (_: IllegalArgumentException) {
-            assert(true)
-        }
+        itemModel.save()
     }
 
     @Test
@@ -94,20 +83,9 @@ class ItemModelTest {
     fun changeTitleGood() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        itemModel.changeTitle(4, "New Title")
-        val expectedItem = itemModel.items[3]
+        itemModel.changeTitle(2, "New Title")
+        val expectedItem = itemModel.items[1]
         assertEquals("New Title", expectedItem.title)
-        assertEquals(dateTimeCreator2(), expectedItem.updated_on)
-        itemModel.save()
-    }
-
-    @Test
-    fun changeTitleGoodDistinctFolders() = runTest {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
-        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        itemModel.changeTitle(4, "2 1") // "2 1" is in use in folder 1 but not in folder 2 which has this item
-        val expectedItem = itemModel.items[3]
-        assertEquals("2 1", expectedItem.title)
         assertEquals(dateTimeCreator2(), expectedItem.updated_on)
         itemModel.save()
     }
@@ -142,8 +120,8 @@ class ItemModelTest {
     fun changeSummaryGood() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        itemModel.changeSummary(4, Json.decodeFromString("""{"value":"New Summary"}"""))
-        val expectedItem = itemModel.items[3]
+        itemModel.changeSummary(1, Json.decodeFromString("""{"value":"New Summary"}"""))
+        val expectedItem = itemModel.items[0]
         assertEquals("""{"value":"New Summary"}""", expectedItem.summary.toString())
         assertEquals(dateTimeCreator2(), expectedItem.updated_on)
         itemModel.save()
@@ -166,8 +144,8 @@ class ItemModelTest {
     fun delGood() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
-        itemModel.del(4) // Id 4 exists
-        assertEquals(3, itemModel.items.size)
+        itemModel.del(2) // Id 4 exists
+        assertEquals(1, itemModel.items.size)
         itemModel.save()
     }
 
@@ -177,7 +155,7 @@ class ItemModelTest {
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
         // Id 10 doesn't exist
         itemModel.del(10)
-        assertEquals(4, itemModel.items.size)
+        assertEquals(2, itemModel.items.size)
         itemModel.save()
     }
 }
