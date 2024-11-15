@@ -74,6 +74,7 @@ dependencies {
     implementation(platform("io.github.jan-tennert.supabase:bom:3.0.1"))
     implementation("io.github.jan-tennert.supabase:postgrest-kt")
     implementation("io.ktor:ktor-client-android:3.0.0")
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.0.2")
 
     // Other dependencies
     implementation("com.google.android.material:material:1.9.0")

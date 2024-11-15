@@ -31,8 +31,10 @@ fun HomePageScreen() {
             users.addAll(results)
             val folderResults = SupabaseClient.loadFolders()
             folders.addAll(folderResults)
+
+            SupabaseClient.getCurrentSession()
         }
-        // TO-DO: change this to query for the signed in user
+        // TODO: change this to query for the signed in user
         val firstUser = users.firstOrNull() // initially grab the first user in the array
 
 //        Test to make sure that it builds properly
