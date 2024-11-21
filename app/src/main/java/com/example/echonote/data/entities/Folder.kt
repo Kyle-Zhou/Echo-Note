@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Folder(
     val id: Long,
-    val user_id: Int,
+    val user_id: String,
     var title: String,
     var description: String?,
     var created_on: LocalDateTime,

@@ -19,24 +19,28 @@ class MockPersistence(private val dateTimeCreator: () -> LocalDateTime): IPersis
         return Json.decodeFromString<JsonElement>("""{"value": "$value"}""")
     }
 
-    override suspend fun loadUsers(): List<User> {
+    override fun getCurrentUser(): String? {
+        return "1"
+    }
+
+    override fun getCurrentUserID(): String {
         TODO("Not yet implemented")
     }
 
-    override fun getCurrentUser(): Int? {
-        return 1
+    override fun getName(): String {
+        TODO("Not yet implemented")
     }
 
-    override fun setCurrentUser(userId: Int) {
+    override fun setCurrentUser(userId: String) {
 
     }
 
     override suspend fun loadFolders(): List<Folder> {
         val localDateTime = dateTimeCreator()
         val list = mutableListOf(
-            Folder(1, 1, "1", "test 1", localDateTime, localDateTime),
-            Folder(2, 1, "2", "test 2", localDateTime, localDateTime),
-            Folder(3, 1, "3", "test 3", localDateTime, localDateTime)
+            Folder(1, "1", "1", "test 1", localDateTime, localDateTime),
+            Folder(2, "1", "2", "test 2", localDateTime, localDateTime),
+            Folder(3, "1", "3", "test 3", localDateTime, localDateTime)
         )
         return list
     }
@@ -63,7 +67,7 @@ class MockPersistence(private val dateTimeCreator: () -> LocalDateTime): IPersis
         return 2
     }
 
-    override suspend fun signupUser(userEmail: String, userPassword: String) {
+    override suspend fun signupUser(userEmail: String, userPassword: String, userName: String) {
         TODO("Not yet implemented")
     }
 

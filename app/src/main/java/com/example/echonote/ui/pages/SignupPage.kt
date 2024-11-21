@@ -19,9 +19,11 @@ fun SignupPageScreen(
     onSignupSuccess: (String) -> Unit,
     onNavigateToLogin: () -> Unit
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var nameError by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf("") }
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
@@ -49,6 +51,27 @@ fun SignupPageScreen(
             .padding(16.dp),
     ) {
         Text(text = "Sign Up", style = MaterialTheme.typography.h4, modifier = Modifier.padding(bottom = 24.dp))
+
+        // Name input with outline
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Name") },
+            isError = nameError.isNotEmpty(),
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Email),
+            singleLine = true,
+            trailingIcon = {
+                if (nameError.isNotEmpty()) {
+                    Icon(Icons.Default.Error, contentDescription = "Error", tint = MaterialTheme.colors.error)
+                }
+            }
+        )
+        if (nameError.isNotEmpty()) {
+            Text(text = nameError, color = MaterialTheme.colors.error, style = MaterialTheme.typography.body2)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Email input with outline
         OutlinedTextField(
@@ -119,10 +142,12 @@ fun SignupPageScreen(
         Button(
             onClick = {
                 // Perform validation and call signup success
+                nameError = ""
                 emailError = ""
                 passwordError = ""
                 confirmPasswordError = ""
-                if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                    if (name.isEmpty()) nameError = "Name is required"
                     if (email.isEmpty()) emailError = "Email is required"
                     if (password.isEmpty()) passwordError = "Password is required"
                     if (confirmPassword.isEmpty()) confirmPasswordError = "Confirm Password is required"
@@ -132,7 +157,7 @@ fun SignupPageScreen(
                     // Launch a coroutine to call the suspend function
                     coroutineScope.launch {
                         try {
-                            SupabaseClient.signupUser(email, password)
+                            SupabaseClient.signupUser(email, password, name)
                             onSignupSuccess("Signup Successful")
                         } catch (e: Exception) {
                             // Handle error (e.g., network error or validation failure)
