@@ -2,16 +2,14 @@ package com.example.echonote.data.persistence
 
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
-import com.example.echonote.data.entities.User
-import kotlinx.serialization.json.JsonElement
 
 interface IPersistence {
 
-    // TODO: Remove this
-    suspend fun loadUsers(): List<User>
+    fun setCurrentUser(userId: String)
+    fun getCurrentUser(): String?
 
-    fun setCurrentUser(userId: Int)
-    fun getCurrentUser(): Int?
+    fun getCurrentUserID(): String
+    fun getName(): String
 
 //    TODO: Separate into multiple interfaces
     suspend fun loadFolders(): List<Folder>
@@ -25,6 +23,6 @@ interface IPersistence {
     suspend fun getItemsCount(): Long
     suspend fun getFoldersCount(): Long
 
-    suspend fun signupUser(userEmail: String, userPassword: String)
+    suspend fun signupUser(userEmail: String, userPassword: String, userName: String)
     suspend fun loginUser(userEmail: String, userPassword: String)
 }

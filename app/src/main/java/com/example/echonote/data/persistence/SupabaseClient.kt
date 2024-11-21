@@ -2,7 +2,6 @@ package com.example.echonote.data.persistence
 
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
-import com.example.echonote.data.entities.User
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.minimalSettings
@@ -14,8 +13,9 @@ import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.minutes
 
 object SupabaseClient: IPersistence {
@@ -31,23 +31,13 @@ object SupabaseClient: IPersistence {
         install(Postgrest)
         install(Storage)
     }
-    private var currentUser: Int? = null
+    private var currentUser: String? = null
 
-    override suspend fun loadUsers(): List<User> = withContext(Dispatchers.IO) {
-        var list = listOf<User>()
-        try {
-            list = supabase.from("Users").select().decodeList<User>()
-        } catch (e: Exception) {
-            println("Error fetching users: ${e.localizedMessage}")
-        }
-        return@withContext list
-    }
-
-    override fun getCurrentUser(): Int? {
+    override fun getCurrentUser(): String? {
         return currentUser
     }
 
-    override fun setCurrentUser(userId: Int) {
+    override fun setCurrentUser(userId: String) {
         currentUser = userId
     }
 
@@ -95,12 +85,15 @@ object SupabaseClient: IPersistence {
         return supabase.from("Items")
     }
 
-    override suspend fun signupUser(userEmail: String, userPassword: String) {
+    override suspend fun signupUser(userEmail: String, userPassword: String, userName: String) {
          supabase.auth.signUpWith(Email) {
             email = userEmail
             password = userPassword
-        }
-        getCurrentSession()
+             data = buildJsonObject {
+                 put("first_name", JsonPrimitive(userName))
+             }
+         }
+        logCurrentSession()
     }
 
     override suspend fun loginUser(userEmail: String, userPassword: String) {
@@ -108,7 +101,7 @@ object SupabaseClient: IPersistence {
             email = userEmail
             password = userPassword
         }
-        getCurrentSession()
+        logCurrentSession()
     }
 
     suspend fun uploadAudioFileAndGetUrl(filePath: String, fileData: ByteArray) : String {
@@ -120,11 +113,24 @@ object SupabaseClient: IPersistence {
         return url
     }
 
-    // Log the current session
-    fun getCurrentSession() {
+    fun logCurrentSession() {
         val currentSession = supabase.auth.currentSessionOrNull()
-        println("Current Session: ${currentSession}")
+        println("Current Session: $currentSession")
         println("Current Session Access Token: ${currentSession?.accessToken}")
+    }
+
+    override fun getCurrentUserID() : String {
+        val currentSession = supabase.auth.currentSessionOrNull()
+        val uuid = currentSession?.user?.id ?: "unknown UUID"
+        println("UUID: $uuid")
+        return uuid
+    }
+
+    override fun getName() : String {
+        val currentSession = supabase.auth.currentSessionOrNull()
+        val name = currentSession?.user?.userMetadata?.get("first_name")?.jsonPrimitive?.content ?: "unknown"
+        println("Name: $name")
+        return name
     }
 
 }

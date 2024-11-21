@@ -1,6 +1,5 @@
 package com.example.echonote.ui.pages
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -13,17 +12,14 @@ import androidx.navigation.NavHostController
 import com.example.echonote.R
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
-import com.example.echonote.data.entities.User
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.serialization.json.Json
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.ui.draw.rotate
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
-import com.example.echonote.data.persistence.IPersistence
 import com.example.echonote.data.persistence.SupabaseClient
 
 // Utility to get the current time
@@ -33,15 +29,13 @@ fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 fun HomePageScreen(navController: NavHostController) {
     Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
 
-        //        TODO: Improve this code
-        val users = remember { mutableStateListOf<User>() }
+        val name = SupabaseClient.getName()
         var folderModel by remember {mutableStateOf<FolderModel?>(null)}
         LaunchedEffect(Unit) {
-            val results = SupabaseClient.loadUsers()
-            SupabaseClient.setCurrentUser(1)
-            users.addAll(results)
+            val uuid = SupabaseClient.getCurrentUserID()
+            SupabaseClient.setCurrentUser(uuid)
             folderModel = FolderModel(SupabaseClient, ::currentMoment)
-            SupabaseClient.getCurrentSession()
+            SupabaseClient.logCurrentSession()
         }
 
 //        var errorMessage by remember { mutableStateOf("") }
@@ -61,9 +55,6 @@ fun HomePageScreen(navController: NavHostController) {
 //            Item(3, 2, "Tutorial 1", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment())
 //        )
 
-        //        // TODO: change this to query for the signed in user
-        val firstUser = users.firstOrNull() // initially grab the first user in the array
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -71,7 +62,7 @@ fun HomePageScreen(navController: NavHostController) {
         ) {
             Spacer(modifier = Modifier.height(6.dp))
             Text(
-                text = "Hello ${firstUser?.name ?: "..."}! 👋",
+                text = "Hello ${name}! 👋",
                 style = MaterialTheme.typography.h5,
                 color = Color.White,
                 modifier = Modifier.align(Alignment.Start)
