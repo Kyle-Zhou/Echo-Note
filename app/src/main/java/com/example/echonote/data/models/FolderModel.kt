@@ -4,39 +4,44 @@ import com.example.echonote.data.persistence.IPersistence
 import com.example.echonote.data.entities.Folder
 import kotlinx.datetime.LocalDateTime
 
-class FolderModel private constructor(
-    private val persistence: IPersistence,
-    private val dateTimeCreator: () -> LocalDateTime,
-    val folders: MutableList<Folder> // Must pass in the folders directly to constructor to use invoke operator below
-    ) {
+class FolderModel(
+        private val persistence: IPersistence,
+        private val dateTimeCreator: () -> LocalDateTime
+    ): IPublisher() {
+    val folders: MutableList<Folder> = emptyList<Folder>().toMutableList()
+    var isInitialized = false
 
-    companion object {
-        suspend operator fun invoke(persistence: IPersistence, dateTimeCreator: () -> LocalDateTime)
-        = FolderModel(persistence, dateTimeCreator, persistence.loadFolders().toMutableList())
+    /**
+     * Returns true if this call initialized the model
+     */
+    suspend fun init(): Boolean {
+        if (isInitialized) {
+            return false
+        }
+        folders.addAll(persistence.loadFolders().toMutableList())
+        isInitialized = true
+        notifySubscribers()
+        return true
     }
 
-    suspend fun add(title: String, description: String?): Long {
+    suspend fun add(title: String, description: String?) {
         val element = folders.find { it.title == title }
         if (element != null) throw IllegalArgumentException("Title already in use")
-        val count = persistence.getFoldersCount() + 1
         val currentTime = dateTimeCreator()
-        val folder = Folder(count, persistence.getCurrentUser()!!, title, description, currentTime, currentTime)
+        val folder = persistence.createFolder(title, description, currentTime, currentTime)
         folders.add(folder)
-        persistence.saveFolders(folders)
-        return count
+        notifySubscribers()
     }
 
     suspend fun changeTitle(id: Long, title: String) {
-        for(current in folders) {
-            if(current.id != id && current.title == title) {
-                throw IllegalArgumentException("Title $title is already in use")
-            } else if(current.id == id){
-                current.title = title
-                current.updated_on = dateTimeCreator()
-                persistence.saveFolders(folders)
-                return
-            }
-        }
+        val element = folders.find { it.id != id && it.title == title }
+        if (element != null) throw IllegalArgumentException("Title $title is already in use")
+        val current = folders.find { it.id == id }
+        if(current == null) throw IllegalArgumentException("No id $id exists")
+        current.title = title
+        current.updated_on = dateTimeCreator()
+        persistence.saveFolders(folders)
+        notifySubscribers()
     }
 
     suspend fun changeDescription(id: Long, description: String?) {
@@ -45,12 +50,13 @@ class FolderModel private constructor(
         element.description = description
         element.updated_on = dateTimeCreator()
         persistence.saveFolders(folders)
+        notifySubscribers()
     }
 
     suspend fun del(id: Long) {
+        persistence.deleteFolder(id)
         folders.removeIf{it.id == id}
-//        TODO: Remove from db
-        persistence.saveFolders(folders)
+        notifySubscribers()
     }
 
     suspend fun save() {

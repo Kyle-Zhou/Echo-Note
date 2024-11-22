@@ -13,12 +13,35 @@ import io.github.jan.supabase.postgrest.query.Count
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
+import kotlinx.datetime.LocalDateTime
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.minutes
 
+
+
 object SupabaseClient: IPersistence {
+    @Serializable
+    private data class TempItem (
+        var folder_id: Long,
+        var title: String,
+        var summary: JsonElement,
+        var created_on: LocalDateTime,
+        var updated_on: LocalDateTime,
+    )
+
+    @Serializable
+    private data class TempFolder (
+        val user_id: String,
+        var title: String,
+        var description: String?,
+        var created_on: LocalDateTime,
+        var updated_on: LocalDateTime,
+    )
+
     private val supabase = createSupabaseClient(
         // public project url
         supabaseUrl = "https://sxrwvweeprivkwsgimun.supabase.co",
@@ -41,6 +64,19 @@ object SupabaseClient: IPersistence {
         currentUser = userId
     }
 
+    override suspend fun createFolder(
+        title: String,
+        description: String?,
+        created_on: LocalDateTime,
+        update_on: LocalDateTime
+    ): Folder {
+        val tempFolder = TempFolder(currentUser!!, title, description, created_on, update_on)
+        val folder = getFoldersTable().insert(tempFolder) {
+            select()
+        }.decodeSingle<Folder>()
+        return folder
+    }
+
     override suspend fun loadFolders(): List<Folder> {
         return getFoldersTable().select{
             filter { eq("user_id", currentUser!!) }
@@ -49,6 +85,26 @@ object SupabaseClient: IPersistence {
 
     override suspend fun saveFolders(folders: List<Folder>) {
         getFoldersTable().upsert(folders)
+    }
+
+    override suspend fun deleteFolder(id: Long) {
+        getFoldersTable().delete {
+            filter { eq("id", id) }
+        }
+    }
+
+    override suspend fun createItem(
+        folder_id: Long,
+        title: String,
+        summary: JsonElement,
+        created_on: LocalDateTime,
+        update_on: LocalDateTime
+    ): Item {
+        val tempItem = TempItem(folder_id, title, summary, created_on, update_on)
+        val item = getItemsTable().insert(tempItem) {
+            select()
+        }.decodeSingle<Item>()
+        return item
     }
 
     override suspend fun loadItems(folderId: Long): List<Item> {
@@ -65,16 +121,10 @@ object SupabaseClient: IPersistence {
         getItemsTable().upsert(item)
     }
 
-    override suspend fun getFoldersCount(): Long {
-        return getFoldersTable().select{
-            count(Count.EXACT)
-        }.countOrNull()!!
-    }
-
-    override suspend fun getItemsCount(): Long {
-        return getItemsTable().select{
-            count(Count.EXACT)
-        }.countOrNull()!!
+    override suspend fun deleteItem(id: Long) {
+        getItemsTable().delete{
+            filter { eq("id", id) }
+        }
     }
 
     private fun getFoldersTable(): PostgrestQueryBuilder {
@@ -132,5 +182,7 @@ object SupabaseClient: IPersistence {
         println("Name: $name")
         return name
     }
+
+
 
 }

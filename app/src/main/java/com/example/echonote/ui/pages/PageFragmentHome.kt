@@ -1,5 +1,7 @@
 package com.example.echonote.ui.pages
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -11,16 +13,23 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.echonote.R
 import com.example.echonote.data.entities.Folder
-import com.example.echonote.data.entities.Item
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForwardIos
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.ui.draw.rotate
+import com.example.echonote.data.controller.FolderController
+import com.example.echonote.data.controller.FolderControllerEvent
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.SupabaseClient
+import com.example.echonote.ui.components.ConfirmDismissDialog
+import com.example.echonote.ui.components.TextInputDialog
+import com.example.echonote.ui.models.ViewFolderModel
+import kotlinx.coroutines.launch
 
 // Utility to get the current time
 fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -28,32 +37,20 @@ fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 @Composable
 fun HomePageScreen(navController: NavHostController) {
     Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
-
         val name = SupabaseClient.getName()
-        var folderModel by remember {mutableStateOf<FolderModel?>(null)}
+        val folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
+        val viewModel by remember { mutableStateOf(ViewFolderModel(folderModel)) }
+        val folderController by remember { mutableStateOf(FolderController(folderModel)) }
+        var showNewFolderDialog by remember { mutableStateOf(false) }
+        val coroutineScope = rememberCoroutineScope()
+        var errorMessage by remember { mutableStateOf("") }
+
         LaunchedEffect(Unit) {
             val uuid = SupabaseClient.getCurrentUserID()
             SupabaseClient.setCurrentUser(uuid)
-            folderModel = FolderModel(SupabaseClient, ::currentMoment)
+            folderModel.init()
             SupabaseClient.logCurrentSession()
         }
-
-//        var errorMessage by remember { mutableStateOf("") }
-
-        // Mock values link this with actual db
-//        val users = listOf(
-//            User(1, "Gen", "gen@gmail.com"),
-//            User(2, "Jane", "jane@gmail.com")
-//        )
-//        val mockFolders = listOf(
-//            Folder(1, 1, "CS241", "Foundations of Sequential Programs", currentMoment(), currentMoment()),
-//            Folder(2, 1, "CS346", "Application Development", currentMoment(), currentMoment())
-//        )
-//        val mockItems = listOf(
-//            Item(1, 1, "Lecture 1", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment()),
-//            Item(2, 1, "Lecture 2", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment()),
-//            Item(3, 2, "Tutorial 1", Json.parseToJsonElement("""{"summary":"bruh bruh bruh bruh"}"""), currentMoment(), currentMoment())
-//        )
 
         Column(
             modifier = Modifier
@@ -70,24 +67,110 @@ fun HomePageScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Button(onClick = {showNewFolderDialog = true}) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text="+ ",
+                        style = MaterialTheme.typography.h6,
+                        color = Color.White)
+                    Text(text = "Create a New Category",
+                        style = MaterialTheme.typography.h6,
+                        color = Color.White)
+                }
+            }
+
+            if(errorMessage.isNotEmpty()) {
+                ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
+            }
+
+            if(showNewFolderDialog) {
+                TextInputDialog("Create a new category", {
+                    coroutineScope.launch {
+                        try {
+                            folderController.invoke(FolderControllerEvent.ADD, title = it)
+                        } catch (e: IllegalArgumentException) {
+                            println("Error when adding folder: $e")
+                            errorMessage = "Title must be unique"
+                        } catch (e: Exception) {
+                            println("Error creating: $e")
+                        }
+                        println(folderModel.folders)
+                    }
+                    showNewFolderDialog = false
+                }, {showNewFolderDialog = false})
+            }
+
             // Iterate through folders and render dropdown menus
-            (folderModel?.folders?:emptyList<Folder>()).forEach { folder ->
-                FolderDropdown(folder = folder, navController = navController)
+            viewModel.folders.forEach { folder ->
+                FolderCard(folder = folder, navController = navController, folderController = folderController)
             }
         }
     }
 }
 
+enum class FolderCardDropdownItem {RENAME, CHANGE_DESC, DELETE, NONE}
+
 @Composable
-fun FolderDropdown(folder: Folder, navController: NavHostController) {
+fun FolderCard(folder: Folder, navController: NavHostController, folderController: FolderController) {
     var expanded by remember { mutableStateOf(false) }
-    var itemModel by remember { mutableStateOf<ItemModel?>(null) }
+    var isDropdownExpanded by remember { mutableStateOf(false) }
     val folderId: Long = folder.id
+    var itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
+    var dropdownOption by remember { mutableStateOf(FolderCardDropdownItem.NONE) }
+    val coroutineScope = rememberCoroutineScope()
+    var errorMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
-        itemModel = ItemModel(SupabaseClient, ::currentMoment, folderId)
+        itemModel.init()
     }
-    val items = itemModel?.items?:emptyList<Item>()
+
+    fun defaultDismiss() { dropdownOption = FolderCardDropdownItem.NONE }
+
+    when (dropdownOption) {
+        FolderCardDropdownItem.RENAME -> TextInputDialog("Rename", onSubmit = {
+            coroutineScope.launch {
+                try {
+                    folderController.invoke(FolderControllerEvent.RENAME, id = folderId, title = it)
+                } catch (_: IllegalArgumentException) {
+                    errorMessage = "This title already exists."
+                } catch (e: Exception) {
+                    println(e)
+                }
+            }
+            dropdownOption = FolderCardDropdownItem.NONE
+           },
+            onDismiss = ::defaultDismiss, defaultTextInput = folder.title)
+        FolderCardDropdownItem.CHANGE_DESC -> TextInputDialog("Change Description",
+            onSubmit = {
+            coroutineScope.launch {
+                try{
+                    folderController.invoke(
+                        FolderControllerEvent.CHANGE_DESC,
+                        id = folderId,
+                        description = it
+                    )
+                } catch (e: Exception) {
+                    println("Error when changing description: $e")
+                }
+            }
+            dropdownOption = FolderCardDropdownItem.NONE
+            }, onDismiss = ::defaultDismiss, defaultTextInput = folder.description?:"")
+        FolderCardDropdownItem.DELETE -> ConfirmDismissDialog("Are you sure you want to delete this folder?",
+            onConfirm = {
+            coroutineScope.launch {
+                try{
+                    folderController.invoke(FolderControllerEvent.DEL, id = folderId)
+                } catch (e: Exception) {
+                    println("Failed to delete folder: $e")
+                }
+            }
+            dropdownOption = FolderCardDropdownItem.NONE
+        }, onDismiss = ::defaultDismiss)
+        FolderCardDropdownItem.NONE -> {}
+    }
+
+    if(errorMessage.isNotEmpty()) {
+        ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Button(
@@ -108,12 +191,86 @@ fun FolderDropdown(folder: Folder, navController: NavHostController) {
                         .align(Alignment.CenterVertically)
                         .padding(end = if (!expanded) 8.dp else 0.dp)
                 )
-                Text(
-                    text = folder.title,
-                    style = MaterialTheme.typography.h6,
-                    color = Color.Black,
-                    modifier = Modifier.weight(1f).padding(start = if (expanded) 8.dp else 0.dp)
-                )
+                Column(modifier = Modifier.weight(1f).padding(start = if (expanded) 8.dp else 0.dp)){
+                    Text(
+                        text = folder.title,
+                        style = MaterialTheme.typography.h6,
+                        color = Color.Black,
+                    )
+                    if(folder.description != null && folder.description?.isNotEmpty() == true){
+                        Text(
+                            text = folder.description ?: "",
+                            style = MaterialTheme.typography.subtitle1,
+                            color = Color.Black,
+                        )
+                    }
+                }
+                TextButton(onClick = { isDropdownExpanded = true },
+                        modifier = Modifier
+                            .height(35.dp)
+                            .width(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = Color.Black
+                        )
+                    ){
+                    Icon(
+                        imageVector = Icons.Filled.MoreVert,
+                        contentDescription = "Modify icon",
+                        modifier = Modifier
+                            .align(Alignment.CenterVertically)
+                    )
+                    DropdownMenu(
+                        expanded = isDropdownExpanded,
+                        onDismissRequest = { isDropdownExpanded = false },
+                        modifier = Modifier
+                            .background(color = colorResource(id = R.color.white))
+                            .padding(start = 5.dp)
+                    ) {
+                        DropdownMenuItem(
+                            onClick = {
+                                // Rename folder popup
+                                dropdownOption = FolderCardDropdownItem.RENAME
+                                isDropdownExpanded = false
+                            },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
+                        ) {
+                            Text(
+                                "Rename",
+                                color = colorResource(id = R.color.blue),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                // Change folder description popup
+                                dropdownOption = FolderCardDropdownItem.CHANGE_DESC
+                                isDropdownExpanded = false
+                            },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
+                        ) {
+                            Text(
+                                "Change Description",
+                                color = colorResource(id = R.color.blue),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        DropdownMenuItem(
+                            onClick = {
+                                // Delete folder popup
+                                dropdownOption = FolderCardDropdownItem.DELETE
+                                isDropdownExpanded = false
+                            },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
+                        ) {
+                            Text(
+                                "Delete",
+                                color = colorResource(id = R.color.blue),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
             }
         }
         if (expanded) {
@@ -122,7 +279,7 @@ fun FolderDropdown(folder: Folder, navController: NavHostController) {
                     .fillMaxWidth()
                     .padding(top = 4.dp)
             ) {
-                items.forEach { item ->
+                itemModel.items.forEach { item ->
                     Button(
                         onClick = {
                             val summary = item.summary.toString()
