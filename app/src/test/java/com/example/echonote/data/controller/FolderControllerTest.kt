@@ -1,11 +1,12 @@
-package com.example.echonote.data.models
+package com.example.echonote.data.controller
+import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.MockPersistence
 import com.example.echonote.dateTimeCreator
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-class FolderModelTest {
+class FolderControllerTest {
     private suspend fun createFolderModel(): FolderModel {
         val mockPersistence = MockPersistence(::dateTimeCreator)
         val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
@@ -16,93 +17,86 @@ class FolderModelTest {
     @Test
     fun addGood() = runTest {
         val folderModel = createFolderModel()
-        folderModel.add("Add", null)
+        val folderController = FolderController(folderModel)
+        folderController.invoke(FolderControllerEvent.ADD, title = "Add")
         assertEquals(4, folderModel.folders.size)
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
     fun addSameTitle() = runTest {
         val folderModel = createFolderModel()
-        println(folderModel.folders)
+        val folderController = FolderController(folderModel)
         try {
-            folderModel.add("1", "test")
+            folderController.invoke(FolderControllerEvent.ADD, title =  "1", description = "test")
             assert(false)
         } catch (e: IllegalArgumentException) {
             assert(true)
         }
-        folderModel.save()
     }
 
     @Test
     fun delGood() = runTest {
         val folderModel = createFolderModel()
-        folderModel.del(3)
+        val folderController = FolderController(folderModel)
+        folderController.invoke(FolderControllerEvent.DEL, 3)
         assertEquals(2, folderModel.folders.size)
-        folderModel.save()
     }
 
     @Test
     fun delNone() = runTest {
         val folderModel = createFolderModel()
- // This folder hasn't been added before
-        folderModel.del(10)
+        val folderController = FolderController(folderModel)
+        // This folder hasn't been added before
+        folderController.invoke(FolderControllerEvent.DEL, 10)
         assertEquals(3, folderModel.folders.size)
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
     fun changeTitleGood() = runTest {
         val folderModel = createFolderModel()
-        folderModel.changeTitle(3, "Hello")
+        val folderController = FolderController(folderModel)
+        folderController.invoke(FolderControllerEvent.RENAME, 3, "Hello")
         val expectedItem = folderModel.folders[2]
         assertEquals("Hello", expectedItem.title)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
     fun changeTitleBad() = runTest {
         val folderModel = createFolderModel()
+        val folderController = FolderController(folderModel)
         try {
-            folderModel.changeTitle(3, "2") // "2" title already used
+            folderController.invoke(FolderControllerEvent.RENAME, 3, "2") // "2" title already used
             assert(false)
         } catch (e: IllegalArgumentException) {
             assert(true)
         }
-        folderModel.save()
-    }
-
-    @Test
-    fun changeTitleBadEarly() = runTest {
-        val folderModel = createFolderModel()
-        try {
-            folderModel.changeTitle(1, "2") // "2" title already used
-            assert(false)
-        } catch (e: IllegalArgumentException) {
-            assert(true)
-        }
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
     fun changeDescriptionGood() = runTest {
         val folderModel = createFolderModel()
-        folderModel.changeDescription(1, "Change description")
+        val folderController = FolderController(folderModel)
+        folderController.invoke(FolderControllerEvent.CHANGE_DESC, 1, description = "Change description")
         val expectedItem = folderModel.folders[0]
         assertEquals("Change description", expectedItem.description)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
     fun changeDescriptionGoodNull() = runTest {
         val folderModel = createFolderModel()
-        folderModel.changeDescription(1, null)
+        val folderController = FolderController(folderModel)
+        folderController.invoke(FolderControllerEvent.CHANGE_DESC, 1, description = null)
         val expectedItem = folderModel.folders[0]
         assertEquals(null, expectedItem.description)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderModel.save()
+        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
 }

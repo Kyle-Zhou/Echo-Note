@@ -46,9 +46,9 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
     var selectedOption by remember { mutableStateOf("Default") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     //  TO-DO: replace with user's db
-    val folderModel = remember {mutableStateOf<FolderModel?>(null)}
+    var folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
     LaunchedEffect(Unit) {
-        folderModel.value = FolderModel(SupabaseClient, ::currentMoment)
+        folderModel.init()
     }
 
     var selectedMode by remember { mutableStateOf("Record") }
@@ -220,7 +220,7 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
                             .background(color = colorResource(id = R.color.white))
                             .padding(start = 5.dp)
                     ) {
-                        (folderModel.value?.folders ?: emptyList<Folder>()).forEach { option ->
+                        folderModel.folders.forEach { option ->
                             DropdownMenuItem(
                                 onClick = {
                                     selectedOption = option.title
