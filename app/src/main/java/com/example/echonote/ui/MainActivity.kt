@@ -1,5 +1,7 @@
 package com.example.echonote.ui
 
+import PageFragmentItem
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,7 +32,6 @@ import com.example.echonote.R
 import com.example.echonote.ui.pages.AddPageScreen
 import com.example.echonote.ui.pages.HomePageScreen
 import com.example.echonote.ui.pages.LoginPageScreen
-import com.example.echonote.ui.pages.PageFragmentItem
 import com.example.echonote.ui.pages.SignupPageScreen
 import com.example.echonote.ui.pages.TestPageScreen
 import com.example.echonote.ui.theme.EchoNoteTheme
@@ -120,9 +121,8 @@ fun MyApp() {
             ) { backStackEntry ->
                 val folderTitle = backStackEntry.arguments?.getString("folderTitle") ?: "Unknown Folder"
                 val itemTitle = backStackEntry.arguments?.getString("itemTitle") ?: "Unknown Item"
-                val summaryJson = backStackEntry.arguments?.getString("summary") ?: "{}"
-
-                // Parse summaryJson back to JsonElement
+                val summaryJsonEncoded = backStackEntry.arguments?.getString("summary") ?: "{}"
+                val summaryJson = Uri.decode(summaryJsonEncoded)
                 val summary = Json.parseToJsonElement(summaryJson)
                 PageFragmentItem(navController, folderTitle, itemTitle, summary)
             }
