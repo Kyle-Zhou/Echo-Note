@@ -1,5 +1,6 @@
 package com.example.echonote.data.models
 
+import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
 import com.example.echonote.data.persistence.IPersistence
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
@@ -40,6 +41,12 @@ class ItemModel(
         val item = persistence.createItem(folderId, title, summary, currentTime, currentTime)
         items.add(item)
         notifySubscribers()
+    }
+
+    suspend fun getItem(itemId: Long): Item {
+        val current = items.find { it.id != itemId }
+        if(current == null) throw IllegalArgumentException("No id $itemId exists")
+        return current;
     }
 
     suspend fun changeFolder(id: Long, folderId: Long) {

@@ -112,19 +112,15 @@ fun MyApp() {
             }
             // PageFragmentItem
             composable(
-                route = "item/{folderTitle}/{itemTitle}?summary={summary}",
+                route = "item/{folderId}/{itemId}",
                 arguments = listOf(
-                    navArgument("folderTitle") { type = NavType.StringType },
-                    navArgument("itemTitle") { type = NavType.StringType },
-                    navArgument("summary") { type = NavType.StringType; defaultValue = "" }
+                    navArgument("folderId") { type = NavType.LongType },
+                    navArgument("itemId") { type = NavType.LongType },
                 )
             ) { backStackEntry ->
-                val folderTitle = backStackEntry.arguments?.getString("folderTitle") ?: "Unknown Folder"
-                val itemTitle = backStackEntry.arguments?.getString("itemTitle") ?: "Unknown Item"
-                val summaryJsonEncoded = backStackEntry.arguments?.getString("summary") ?: "{}"
-                val summaryJson = Uri.decode(summaryJsonEncoded)
-                val summary = Json.parseToJsonElement(summaryJson)
-                PageFragmentItem(navController, folderTitle, itemTitle, summary)
+                val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
+                val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
+                PageFragmentItem(navController, folderId, itemId)
             }
         }
 

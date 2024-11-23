@@ -76,12 +76,9 @@ class Summarization {
                         Log.d("API_RESPONSE", "Raw Response: $responseBody")
                         val json = Json { ignoreUnknownKeys = true }
                         val jsonResponse = json.decodeFromString<OpenAIResponse>(responseBody)
-                        val summaryText = jsonResponse.choices.firstOrNull()?.message?.content
-                        if (summaryText != null) {
-                            callback(summaryText)
-                        } else {
-                            callback("No summary available in the response.")
-                        }
+                        val summaryText = (jsonResponse.choices.firstOrNull()?.message?.content)
+                            ?: "No summary available"
+                        callback(summaryText)
                     } catch (e: Exception) {
                         Log.e("API_ERROR", "Error parsing response: ${e.message}", e)
                         callback("Error parsing the response!")

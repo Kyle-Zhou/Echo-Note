@@ -38,6 +38,12 @@ class FolderModel(
         notifySubscribers()
     }
 
+    fun getFolder(folderId: Long): Folder {
+        val current = folders.find { it.id != folderId }
+        if(current == null) throw IllegalArgumentException("No id $folderId exists")
+        return current;
+    }
+
     suspend fun changeTitle(id: Long, title: String) {
         val element = folders.find { it.id != id && it.title == title }
         if (element != null) throw IllegalArgumentEchoNoteException("Title $title is already in use")

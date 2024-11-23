@@ -76,6 +76,14 @@ object SupabaseClient: IPersistence {
         return folder
     }
 
+    override suspend fun getFolder(folderId: Long): Folder {
+        return getFoldersTable().select {
+            filter {
+                eq("id", folderId)
+            }
+        }.decodeSingle<Folder>()
+    }
+
     override suspend fun loadFolders(): List<Folder> {
         return getFoldersTable().select{
             filter { eq("user_id", currentUser!!) }
@@ -115,6 +123,14 @@ object SupabaseClient: IPersistence {
             select()
         }.decodeSingle<Item>()
         return item
+    }
+
+    override suspend fun getItem(itemId: Long): Item {
+        return getItemsTable().select{
+            filter {
+                eq("id", itemId)
+            }
+        }.decodeSingle<Item>()
     }
 
     override suspend fun loadItems(folderId: Long): List<Item> {

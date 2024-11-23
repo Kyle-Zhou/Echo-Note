@@ -13,8 +13,3 @@ data class Item(
     var created_on: LocalDateTime,
     var updated_on: LocalDateTime,
 )
-
-@Serializable
-data class SummaryData(
-    val summary: String
-)

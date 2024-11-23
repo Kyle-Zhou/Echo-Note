@@ -283,9 +283,8 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                 itemModel.items.forEach { item ->
                     Button(
                         onClick = {
-                            val summaryJsonString = item.summary.toString()
-                            val encodedSummary = Uri.encode(summaryJsonString)
-                            navController.navigate("item/${folder.title}/${item.title}?summary=$encodedSummary")
+                            val itemId = item.id
+                            navController.navigate("item/${folderId}/${itemId}")
                         },
                         colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.white)),
                         modifier = Modifier.fillMaxWidth()
