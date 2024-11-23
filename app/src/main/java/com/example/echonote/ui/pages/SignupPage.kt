@@ -10,6 +10,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.echonote.data.controller.FolderController
+import com.example.echonote.data.controller.FolderControllerEvent
+import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.SupabaseClient
 import kotlinx.coroutines.launch
 
@@ -28,6 +31,8 @@ fun SignupPageScreen(
     var passwordError by remember { mutableStateOf("") }
     var confirmPasswordError by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope() // Creating a coroutine scope
+    val folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
+    val folderController by remember { mutableStateOf(FolderController(folderModel)) }
 
     var showErrorDialog by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
@@ -157,7 +162,13 @@ fun SignupPageScreen(
                     // Launch a coroutine to call the suspend function
                     coroutineScope.launch {
                         try {
+                            // Create user in supabase auth table
                             SupabaseClient.signupUser(email, password, name)
+                            // Set current user to current session's uuid locally
+                            val uuid = SupabaseClient.getCurrentUserID()
+                            SupabaseClient.setCurrentUser(uuid)
+                            // Create "Default" folder
+                            folderController.invoke(FolderControllerEvent.ADD, title = "Default", description = "Hi! This is your default folder!")
                             onSignupSuccess("Signup Successful")
                         } catch (e: Exception) {
                             // Handle error (e.g., network error or validation failure)
