@@ -2,6 +2,9 @@ package com.example.echonote.data.models
 
 import com.example.echonote.data.entities.Item
 import com.example.echonote.data.persistence.IPersistence
+import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
+import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.json.JsonElement
 
@@ -28,8 +31,11 @@ class ItemModel(
     }
 
     suspend fun add(title: String, summary: JsonElement) {
+        if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+
         val possibleItems = items.filter { it.title == title }
-        if(possibleItems.isNotEmpty()) throw IllegalArgumentException("Title must be unique")
+        if(possibleItems.isNotEmpty()) throw IllegalArgumentEchoNoteException("Title must be unique")
+
         val currentTime = dateTimeCreator()
         val item = persistence.createItem(folderId, title, summary, currentTime, currentTime)
         items.add(item)
@@ -41,7 +47,8 @@ class ItemModel(
         if(folderId == this.folderId) return
 
         val element = items.find { it.id == id }
-        if(element == null) throw IllegalArgumentException("Id doesn't exist for this item")
+        if(element == null) throw NotFoundEchoNoteException("Id $id doesn't exist for this item")
+
         element.folder_id = folderId
         element.updated_on = dateTimeCreator()
         persistence.saveItem(element)
@@ -50,11 +57,15 @@ class ItemModel(
     }
 
     suspend fun changeTitle(id: Long, title: String) {
+        if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+
         val item = items.find { it.id == id }
-        if (item == null) throw IllegalArgumentException("Id $id doesn't exist")
+        if (item == null) throw NotFoundEchoNoteException("Id $id doesn't exist")
+
         // Inside each folder, the title must be unique
         val folderItems = items.filter { it.folder_id == item.folder_id && it.id != id && it.title == title}
-        if (folderItems.isNotEmpty()) throw IllegalArgumentException("Title is not unique in the folder")
+        if (folderItems.isNotEmpty()) throw IllegalArgumentEchoNoteException("Title is not unique in the folder")
+
         item.title = title
         item.updated_on = dateTimeCreator()
         persistence.saveItem(item)
@@ -62,7 +73,8 @@ class ItemModel(
 
     suspend fun changeSummary(id: Long, summary: JsonElement) {
         val item = items.find { it.id == id }
-        if(item == null) throw IllegalArgumentException("Id doesn't exist for this item")
+        if(item == null) throw NotFoundEchoNoteException("Id $id doesn't exist")
+
         item.summary = summary
         item.updated_on = dateTimeCreator()
         persistence.saveItem(item)

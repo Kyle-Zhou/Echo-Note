@@ -60,6 +60,10 @@ class MockPersistence(dateTimeCreator: () -> LocalDateTime): IPersistence {
 
     }
 
+    override suspend fun saveFolder(folder: Folder) {
+
+    }
+
     override suspend fun deleteFolder(id: Long) {
 
     }

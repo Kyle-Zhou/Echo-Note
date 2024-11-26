@@ -9,7 +9,7 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Count
+import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestQueryBuilder
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
@@ -20,7 +20,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.minutes
-
 
 
 object SupabaseClient: IPersistence {
@@ -80,7 +79,18 @@ object SupabaseClient: IPersistence {
     override suspend fun loadFolders(): List<Folder> {
         return getFoldersTable().select{
             filter { eq("user_id", currentUser!!) }
+            order("id", order = Order.ASCENDING)
         }.decodeList<Folder>()
+    }
+
+    override suspend fun saveFolder(folder: Folder) {
+        getFoldersTable().update({
+            set("title", folder.title)
+            set("description", folder.description)
+            set("updated_on", folder.updated_on)
+        }) {
+            filter { eq("id", folder.id) }
+        }
     }
 
     override suspend fun saveFolders(folders: List<Folder>) {
@@ -110,6 +120,7 @@ object SupabaseClient: IPersistence {
     override suspend fun loadItems(folderId: Long): List<Item> {
         return getItemsTable().select{
             filter { eq("folder_id", folderId) }
+            order("id", order = Order.ASCENDING)
         }.decodeList<Item>()
     }
 
@@ -118,7 +129,14 @@ object SupabaseClient: IPersistence {
     }
 
     override suspend fun saveItem(item: Item) {
-        getItemsTable().upsert(item)
+        getItemsTable().update({
+            set("folder_id", item.folder_id)
+            set("title", item.title)
+            set("summary", item.summary)
+            set("updated_on", item.updated_on)
+        }) {
+            filter { eq("id", item.id) }
+        }
     }
 
     override suspend fun deleteItem(id: Long) {
