@@ -156,11 +156,14 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
             }, onDismiss = ::defaultDismiss, defaultTextInput = folder.description?:"")
         FolderCardDropdownItem.DELETE -> ConfirmDismissDialog("Are you sure you want to delete this folder?",
             onConfirm = {
+                val previousExpanded = expanded
+                expanded = false
             coroutineScope.launch {
                 try{
                     folderController.invoke(FolderControllerEvent.DEL, id = folderId)
                 } catch (e: Exception) {
                     println("Failed to delete folder: $e")
+                    expanded = previousExpanded
                 }
             }
             dropdownOption = FolderCardDropdownItem.NONE
