@@ -1,6 +1,9 @@
 package com.example.echonote.data.models
 import com.example.echonote.data.persistence.MockPersistence
 import com.example.echonote.dateTimeCreator
+import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
+import com.example.echonote.utils.IllegalStateEchoNoteException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -28,7 +31,20 @@ class FolderModelTest {
         try {
             folderModel.add("1", "test")
             assert(false)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assert(true)
+        }
+        folderModel.save()
+    }
+
+    @Test
+    fun addBadEmpty() = runTest {
+        val folderModel = createFolderModel()
+        println(folderModel.folders)
+        try {
+            folderModel.add("", "test")
+            assert(false)
+        } catch (_: EmptyArgumentEchoNoteException) {
             assert(true)
         }
         folderModel.save()
@@ -39,6 +55,22 @@ class FolderModelTest {
         val folderModel = createFolderModel()
         folderModel.del(3)
         assertEquals(2, folderModel.folders.size)
+        folderModel.save()
+    }
+
+    @Test
+    fun delBadAll() = runTest {
+        val folderModel = createFolderModel()
+        folderModel.del(3)
+        assertEquals(2, folderModel.folders.size)
+        folderModel.del(1)
+        assertEquals(1, folderModel.folders.size)
+        try {
+            folderModel.del(2)
+            assert(false)
+        } catch (_: IllegalStateEchoNoteException) {
+            assert(true)
+        }
         folderModel.save()
     }
 
@@ -67,7 +99,7 @@ class FolderModelTest {
         try {
             folderModel.changeTitle(3, "2") // "2" title already used
             assert(false)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
         folderModel.save()
@@ -79,7 +111,7 @@ class FolderModelTest {
         try {
             folderModel.changeTitle(1, "2") // "2" title already used
             assert(false)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
         folderModel.save()

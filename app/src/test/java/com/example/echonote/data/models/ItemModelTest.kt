@@ -1,8 +1,10 @@
 package com.example.echonote.data.models
 import com.example.echonote.data.persistence.MockPersistence
-import com.example.echonote.data.entities.Item
 import com.example.echonote.dateTimeCreator
 import com.example.echonote.dateTimeCreator2
+import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
+import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -31,7 +33,7 @@ class ItemModelTest {
         try {
             itemModel.add("4 2", Json.decodeFromString("""{"value":"test 5"}"""))
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
         itemModel.save()
@@ -69,7 +71,7 @@ class ItemModelTest {
         try {
             itemModel.changeFolder(4, 3) // No folder 3
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
         itemModel.save()
@@ -84,7 +86,7 @@ class ItemModelTest {
         try {
             itemModel.changeFolder(5, 2) // No item 5
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
         itemModel.save()
@@ -110,9 +112,24 @@ class ItemModelTest {
         itemModel.init()
 
         try {
-            itemModel.changeTitle(5, "") // No item 5
+            itemModel.changeTitle(5, "Item 5") // No item 5
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: NotFoundEchoNoteException) {
+            assert(true)
+        }
+        itemModel.save()
+    }
+
+    @Test
+    fun changeTitleBadEmptyTitle() = runTest {
+        val mockPersistence = MockPersistence(::dateTimeCreator)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
+        itemModel.init()
+
+        try {
+            itemModel.changeTitle(2, "")
+            assert(false)
+        } catch (_: EmptyArgumentEchoNoteException) {
             assert(true)
         }
         itemModel.save()
@@ -121,13 +138,13 @@ class ItemModelTest {
     @Test
     fun changeTitleDuplicate() = runTest {
         val mockPersistence = MockPersistence(::dateTimeCreator)
-        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 1)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 2)
         itemModel.init()
 
         try {
             itemModel.changeTitle(4, "3 2") // "3 2" already in use in folder 2
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
         itemModel.save()
@@ -155,7 +172,7 @@ class ItemModelTest {
         try {
             itemModel.changeSummary(5, Json.decodeFromString("""{"value":"New Summary"}""")) // no id 5
             assert(false)
-        } catch (_: IllegalArgumentException) {
+        } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
         itemModel.save()

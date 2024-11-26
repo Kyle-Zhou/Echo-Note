@@ -17,6 +17,7 @@ interface IPersistence {
     suspend fun createFolder(title: String, description: String?, created_on: LocalDateTime, update_on: LocalDateTime): Folder
     suspend fun loadFolders(): List<Folder>
     suspend fun saveFolders(folders: List<Folder>)
+    suspend fun saveFolder(folder: Folder)
     suspend fun deleteFolder(id: Long)
 
     suspend fun createItem(folder_id: Long, title: String, summary: JsonElement, created_on: LocalDateTime, update_on: LocalDateTime): Item

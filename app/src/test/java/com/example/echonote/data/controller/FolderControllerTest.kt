@@ -2,6 +2,7 @@ package com.example.echonote.data.controller
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.MockPersistence
 import com.example.echonote.dateTimeCreator
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -30,7 +31,7 @@ class FolderControllerTest {
         try {
             folderController.invoke(FolderControllerEvent.ADD, title =  "1", description = "test")
             assert(false)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
     }
@@ -71,7 +72,7 @@ class FolderControllerTest {
         try {
             folderController.invoke(FolderControllerEvent.RENAME, 3, "2") // "2" title already used
             assert(false)
-        } catch (e: IllegalArgumentException) {
+        } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
         folderController.invoke(FolderControllerEvent.SAVE)

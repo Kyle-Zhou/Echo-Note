@@ -2,7 +2,6 @@ package com.example.echonote.data.entities
 
 import kotlinx.datetime.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
 @Serializable
