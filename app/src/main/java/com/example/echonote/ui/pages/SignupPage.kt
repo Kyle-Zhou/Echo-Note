@@ -14,6 +14,7 @@ import com.example.echonote.data.controller.FolderController
 import com.example.echonote.data.controller.FolderControllerEvent
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.SupabaseClient
+import com.example.echonote.ui.components.ErrorDialog
 import kotlinx.coroutines.launch
 
 
@@ -38,16 +39,7 @@ fun SignupPageScreen(
     var errorMessage by remember { mutableStateOf("") }
 
     if (showErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
-            title = { Text("Error") },
-            text = { Text(errorMessage) },
-            confirmButton = {
-                Button(onClick = { showErrorDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
+        ErrorDialog(errorMessage) { showErrorDialog = false }
     }
 
     Column(

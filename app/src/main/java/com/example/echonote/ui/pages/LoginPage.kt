@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.example.echonote.data.persistence.SupabaseClient
+import com.example.echonote.ui.components.ErrorDialog
 import kotlinx.coroutines.launch
 
 @Composable
@@ -28,16 +29,7 @@ fun LoginPageScreen(
     var errorMessage by remember { mutableStateOf("") }
 
     if (showErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showErrorDialog = false },
-            title = { Text("Error") },
-            text = { Text(errorMessage) },
-            confirmButton = {
-                Button(onClick = { showErrorDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
+        ErrorDialog(errorMessage) { showErrorDialog = false }
     }
 
     Column(

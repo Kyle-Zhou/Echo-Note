@@ -27,6 +27,7 @@ import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.ui.components.ConfirmDismissDialog
+import com.example.echonote.ui.components.ErrorDialog
 import com.example.echonote.ui.components.TextInputDialog
 import com.example.echonote.ui.models.ViewFolderModel
 import kotlinx.coroutines.launch
@@ -79,7 +80,7 @@ fun HomePageScreen(navController: NavHostController) {
             }
 
             if(errorMessage.isNotEmpty()) {
-                ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
+                ErrorDialog(errorMessage) { errorMessage = "" }
             }
 
             if(showNewFolderDialog) {
@@ -169,7 +170,7 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
     }
 
     if(errorMessage.isNotEmpty()) {
-        ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
+        ErrorDialog(errorMessage) { errorMessage = "" }
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
