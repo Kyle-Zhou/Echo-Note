@@ -1,10 +1,9 @@
 package com.example.echonote.ui.pages
 
+import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,23 +18,18 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.text.style.TextAlign
 import com.example.echonote.data.controller.FolderController
 import com.example.echonote.data.controller.FolderControllerEvent
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.ui.components.ConfirmDismissDialog
-import com.example.echonote.ui.components.ErrorDialog
 import com.example.echonote.ui.components.TextInputDialog
 import com.example.echonote.ui.models.ViewFolderModel
-import com.example.echonote.utils.EmptyArgumentEchoNoteException
-import com.example.echonote.utils.IllegalArgumentEchoNoteException
-import com.example.echonote.utils.IllegalStateEchoNoteException
 import kotlinx.coroutines.launch
 
 // Utility to get the current time
@@ -74,29 +68,23 @@ fun HomePageScreen(navController: NavHostController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(
-                onClick = {showNewFolderDialog = true},
-                modifier = Modifier.padding(bottom = 4.dp)
-                ) {
+            Button(onClick = {showNewFolderDialog = true}) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.AddCircleOutline,
-                        contentDescription = "Add Folder Icon",
-                        tint = Color.White,
-                        modifier = Modifier.padding(end = 14.dp)
-                        )
-                    Text(text = "Create a New Folder",
+                    Text(text="+ ",
+                        style = MaterialTheme.typography.h6,
+                        color = Color.White)
+                    Text(text = "Create a New Category",
                         style = MaterialTheme.typography.h6,
                         color = Color.White)
                 }
             }
 
             if(errorMessage.isNotEmpty()) {
-                ErrorDialog(errorMessage) { errorMessage = "" }
+                ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
             }
 
             if(showNewFolderDialog) {
-                TextInputDialog("Create a new folder", {
+                TextInputDialog("Create a new category", {
                     coroutineScope.launch {
                         try {
                             folderController.invoke(FolderControllerEvent.ADD, title = it)
@@ -113,8 +101,8 @@ fun HomePageScreen(navController: NavHostController) {
             }
 
             // Iterate through folders and render dropdown menus
-            LazyColumn {
-                items(viewModel.folders.size) {index -> FolderCard(viewModel.folders[index], navController, folderController)}
+            viewModel.folders.forEach { folder ->
+                FolderCard(folder = folder, navController = navController, folderController = folderController)
             }
         }
     }
@@ -143,9 +131,7 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
             coroutineScope.launch {
                 try {
                     folderController.invoke(FolderControllerEvent.RENAME, id = folderId, title = it)
-                } catch(_: EmptyArgumentEchoNoteException) {
-                    errorMessage = "Folder name cannot be empty"
-                } catch (_: IllegalArgumentEchoNoteException) {
+                } catch (_: IllegalArgumentException) {
                     errorMessage = "This title already exists."
                 } catch (e: Exception) {
                     println(e)
@@ -171,16 +157,11 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
             }, onDismiss = ::defaultDismiss, defaultTextInput = folder.description?:"")
         FolderCardDropdownItem.DELETE -> ConfirmDismissDialog("Are you sure you want to delete this folder?",
             onConfirm = {
-                val previousExpanded = expanded
-                expanded = false
             coroutineScope.launch {
                 try{
                     folderController.invoke(FolderControllerEvent.DEL, id = folderId)
-                } catch (_: IllegalStateEchoNoteException) {
-                    errorMessage = "You cannot delete all your folders"
                 } catch (e: Exception) {
                     println("Failed to delete folder: $e")
-                    expanded = previousExpanded
                 }
             }
             dropdownOption = FolderCardDropdownItem.NONE
@@ -189,13 +170,14 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
     }
 
     if(errorMessage.isNotEmpty()) {
-        ErrorDialog(errorMessage) { errorMessage = "" }
+        ConfirmDismissDialog(errorMessage, {errorMessage = ""}) { errorMessage = "" }
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         Button(
             onClick = { expanded = !expanded },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
+            colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.white)),
+            modifier = Modifier.fillMaxWidth()
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -204,23 +186,23 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                 Icon(
                     imageVector = Icons.Filled.ArrowForwardIos,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = Color.White,
+                    tint = Color.Black,
                     modifier = Modifier
                         .rotate(if (expanded) 90f else 0f)
                         .align(Alignment.CenterVertically)
                         .padding(end = if (!expanded) 8.dp else 0.dp)
                 )
-                Column(modifier = Modifier.weight(1f).padding(start = if (expanded) 16.dp else 8.dp)){
+                Column(modifier = Modifier.weight(1f).padding(start = if (expanded) 8.dp else 0.dp)){
                     Text(
                         text = folder.title,
                         style = MaterialTheme.typography.h6,
-                        color = Color.White,
+                        color = Color.Black,
                     )
                     if(folder.description != null && folder.description?.isNotEmpty() == true){
                         Text(
                             text = folder.description ?: "",
                             style = MaterialTheme.typography.subtitle1,
-                            color = Color.White,
+                            color = Color.Black,
                         )
                     }
                 }
@@ -228,19 +210,22 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                         modifier = Modifier
                             .height(35.dp)
                             .width(50.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = Color.Black
+                        )
                     ){
                     Icon(
                         imageVector = Icons.Filled.MoreVert,
                         contentDescription = "Modify icon",
                         modifier = Modifier
-                            .align(Alignment.CenterVertically),
-                        tint = Color.White
+                            .align(Alignment.CenterVertically)
                     )
                     DropdownMenu(
                         expanded = isDropdownExpanded,
                         onDismissRequest = { isDropdownExpanded = false },
                         modifier = Modifier
-                            .background(color = colorResource(id = R.color.blue))
+                            .background(color = colorResource(id = R.color.white))
                             .padding(start = 5.dp)
                     ) {
                         DropdownMenuItem(
@@ -249,10 +234,11 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                                 dropdownOption = FolderCardDropdownItem.RENAME
                                 isDropdownExpanded = false
                             },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
                         ) {
                             Text(
-                                "Rename Title",
-                                color = Color.White,
+                                "Rename",
+                                color = colorResource(id = R.color.blue),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -262,10 +248,11 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                                 dropdownOption = FolderCardDropdownItem.CHANGE_DESC
                                 isDropdownExpanded = false
                             },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
                         ) {
                             Text(
                                 "Change Description",
-                                color = Color.White,
+                                color = colorResource(id = R.color.blue),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -275,10 +262,11 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                                 dropdownOption = FolderCardDropdownItem.DELETE
                                 isDropdownExpanded = false
                             },
+                            modifier = Modifier.background(color = colorResource(id = R.color.white))
                         ) {
                             Text(
-                                "Delete Folder",
-                                color = Color.White,
+                                "Delete",
+                                color = colorResource(id = R.color.blue),
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -290,27 +278,19 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .padding(top = 4.dp)
             ) {
                 itemModel.items.forEach { item ->
                     Button(
                         onClick = {
-                            val summary = item.summary.toString()
-                            navController.navigate("item/${folder.title}/${item.title}?summary=$summary")
+                            val summaryJsonString = item.summary.toString()
+                            val encodedSummary = Uri.encode(summaryJsonString)
+                            navController.navigate("item/${folder.title}/${item.title}?summary=$encodedSummary")
                         },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.white)),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Start
-                        ){
-                            Text(text = item.title,
-                                style = MaterialTheme.typography.subtitle1,
-                                color = Color.White,
-                                textAlign = TextAlign.Left,
-                                modifier = Modifier.padding(start = 32.dp)
-                            )
-                        }
-
+                        Text(text = item.title, style = MaterialTheme.typography.subtitle1, color = Color.Black)
                     }
                 }
             }
