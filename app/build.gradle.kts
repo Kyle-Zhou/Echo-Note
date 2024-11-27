@@ -87,4 +87,5 @@ dependencies {
     implementation(libs.markwon.core)  // Markwon core dependency
     implementation(libs.markwon.latex) // Markwon KaTeX extension
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.1") // Datetime
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1") // Json encoder/decoder
 }

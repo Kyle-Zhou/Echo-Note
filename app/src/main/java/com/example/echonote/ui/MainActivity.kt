@@ -1,6 +1,8 @@
 package com.example.echonote.ui
 
+import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -10,9 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -27,15 +27,25 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.echonote.R
+import com.example.echonote.data.models.FolderModel
+import com.example.echonote.data.models.ItemModel
+import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.ui.pages.AddPageScreen
 import com.example.echonote.ui.pages.HomePageScreen
+import com.example.echonote.ui.pages.ItemPageScreen
 import com.example.echonote.ui.pages.LoginPageScreen
-import com.example.echonote.ui.pages.PageFragmentItem
 import com.example.echonote.ui.pages.SignupPageScreen
 import com.example.echonote.ui.pages.TestPageScreen
+import com.example.echonote.ui.pages.currentMoment
 import com.example.echonote.ui.theme.EchoNoteTheme
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+
+// Utility to get the current time
+fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +68,7 @@ fun MyApp() {
     // Get the current backstack entry to check the current screen
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -94,8 +105,20 @@ fun MyApp() {
             startDestination = "login",
             Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomePageScreen(navController) }
-            composable("add") { AddPageScreen() }
+            composable("home") {
+                LaunchedEffect(Unit) {
+                    val uuid = SupabaseClient.getCurrentUserID()
+                    SupabaseClient.setCurrentUser(uuid)
+                    folderModel.init()
+                    SupabaseClient.logCurrentSession()
+                }
+                HomePageScreen(navController, folderModel)
+            }
+            composable("add") {
+                AddPageScreen(
+                    onCancel = { navController.navigate("home") }
+                )
+            }
             composable("test") { TestPageScreen() }
             composable("login") {
                 LoginPageScreen(
@@ -111,20 +134,20 @@ fun MyApp() {
             }
             // PageFragmentItem
             composable(
-                route = "item/{folderTitle}/{itemTitle}?summary={summary}",
+                route = "item/{folderId}/{itemId}",
                 arguments = listOf(
-                    navArgument("folderTitle") { type = NavType.StringType },
-                    navArgument("itemTitle") { type = NavType.StringType },
-                    navArgument("summary") { type = NavType.StringType; defaultValue = "" }
+                    navArgument("folderId") { type = NavType.LongType },
+                    navArgument("itemId") { type = NavType.LongType },
                 )
             ) { backStackEntry ->
-                val folderTitle = backStackEntry.arguments?.getString("folderTitle") ?: "Unknown Folder"
-                val itemTitle = backStackEntry.arguments?.getString("itemTitle") ?: "Unknown Item"
-                val summaryJson = backStackEntry.arguments?.getString("summary") ?: "{}"
-
-                // Parse summaryJson back to JsonElement
-                val summary = Json.parseToJsonElement(summaryJson)
-                PageFragmentItem(navController, folderTitle, itemTitle, summary)
+                val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
+                val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
+                Log.d("NavigationArgs", "folderId: $folderId, itemId: $itemId")
+                val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
+                val selectedFolder = folderModel.folders.find{ it.id == folderId }
+                if(selectedFolder != null) {
+                    ItemPageScreen(navController, selectedFolder, itemModel, itemId)
+                }
             }
         }
 

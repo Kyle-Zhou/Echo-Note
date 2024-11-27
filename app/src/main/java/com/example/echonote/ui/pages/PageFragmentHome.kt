@@ -42,22 +42,14 @@ import kotlinx.coroutines.launch
 fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
 @Composable
-fun HomePageScreen(navController: NavHostController) {
+fun HomePageScreen(navController: NavHostController, folderModel: FolderModel) {
     Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
         val name = SupabaseClient.getName()
-        val folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
         val viewModel by remember { mutableStateOf(ViewFolderModel(folderModel)) }
         val folderController by remember { mutableStateOf(FolderController(folderModel)) }
         var showNewFolderDialog by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         var errorMessage by remember { mutableStateOf("") }
-
-        LaunchedEffect(Unit) {
-            val uuid = SupabaseClient.getCurrentUserID()
-            SupabaseClient.setCurrentUser(uuid)
-            folderModel.init()
-            SupabaseClient.logCurrentSession()
-        }
 
         Column(
             modifier = Modifier
@@ -77,14 +69,14 @@ fun HomePageScreen(navController: NavHostController) {
             Button(
                 onClick = {showNewFolderDialog = true},
                 modifier = Modifier.padding(bottom = 4.dp)
-                ) {
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Filled.AddCircleOutline,
                         contentDescription = "Add Folder Icon",
                         tint = Color.White,
                         modifier = Modifier.padding(end = 14.dp)
-                        )
+                    )
                     Text(text = "Create a New Folder",
                         style = MaterialTheme.typography.h6,
                         color = Color.White)
@@ -152,39 +144,39 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                 }
             }
             dropdownOption = FolderCardDropdownItem.NONE
-           },
+        },
             onDismiss = ::defaultDismiss, defaultTextInput = folder.title)
         FolderCardDropdownItem.CHANGE_DESC -> TextInputDialog("Change Description",
             onSubmit = {
-            coroutineScope.launch {
-                try{
-                    folderController.invoke(
-                        FolderControllerEvent.CHANGE_DESC,
-                        id = folderId,
-                        description = it
-                    )
-                } catch (e: Exception) {
-                    println("Error when changing description: $e")
+                coroutineScope.launch {
+                    try{
+                        folderController.invoke(
+                            FolderControllerEvent.CHANGE_DESC,
+                            id = folderId,
+                            description = it
+                        )
+                    } catch (e: Exception) {
+                        println("Error when changing description: $e")
+                    }
                 }
-            }
-            dropdownOption = FolderCardDropdownItem.NONE
+                dropdownOption = FolderCardDropdownItem.NONE
             }, onDismiss = ::defaultDismiss, defaultTextInput = folder.description?:"")
         FolderCardDropdownItem.DELETE -> ConfirmDismissDialog("Are you sure you want to delete this folder?",
             onConfirm = {
                 val previousExpanded = expanded
                 expanded = false
-            coroutineScope.launch {
-                try{
-                    folderController.invoke(FolderControllerEvent.DEL, id = folderId)
-                } catch (_: IllegalStateEchoNoteException) {
-                    errorMessage = "You cannot delete all your folders"
-                } catch (e: Exception) {
-                    println("Failed to delete folder: $e")
-                    expanded = previousExpanded
+                coroutineScope.launch {
+                    try{
+                        folderController.invoke(FolderControllerEvent.DEL, id = folderId)
+                    } catch (_: IllegalStateEchoNoteException) {
+                        errorMessage = "You cannot delete all your folders"
+                    } catch (e: Exception) {
+                        println("Failed to delete folder: $e")
+                        expanded = previousExpanded
+                    }
                 }
-            }
-            dropdownOption = FolderCardDropdownItem.NONE
-        }, onDismiss = ::defaultDismiss)
+                dropdownOption = FolderCardDropdownItem.NONE
+            }, onDismiss = ::defaultDismiss)
         FolderCardDropdownItem.NONE -> {}
     }
 
@@ -225,10 +217,10 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                     }
                 }
                 TextButton(onClick = { isDropdownExpanded = true },
-                        modifier = Modifier
-                            .height(35.dp)
-                            .width(50.dp),
-                    ){
+                    modifier = Modifier
+                        .height(35.dp)
+                        .width(50.dp),
+                ){
                     Icon(
                         imageVector = Icons.Filled.MoreVert,
                         contentDescription = "Modify icon",
@@ -294,8 +286,8 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                 itemModel.items.forEach { item ->
                     Button(
                         onClick = {
-                            val summary = item.summary.toString()
-                            navController.navigate("item/${folder.title}/${item.title}?summary=$summary")
+                            val itemId = item.id
+                            navController.navigate("item/${folderId}/${itemId}")
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
