@@ -2,6 +2,7 @@ package com.example.echonote.ui
 
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.padding
@@ -137,9 +138,11 @@ fun MyApp() {
             ) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
                 val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
+                Log.d("NavigationArgs", "folderId: $folderId, itemId: $itemId")
                 val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
                 val selectedFolder = folderModel.folders.find{ it.id == folderId }
                 if(selectedFolder != null) {
+                    LaunchedEffect(Unit) { itemModel.init() }
                     ItemPageScreen(navController, selectedFolder, itemModel.items, itemId)
                 }
             }

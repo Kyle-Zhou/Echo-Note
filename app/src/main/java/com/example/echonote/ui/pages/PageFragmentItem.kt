@@ -37,7 +37,7 @@ import kotlinx.serialization.Serializable
 @Composable
 fun ItemPageScreen(
     navController: NavHostController,
-    seelctedFolder: Folder,
+    selectedFolder: Folder,
     items: MutableList<Item>,
     itemId: Long,
 ) {
@@ -46,7 +46,7 @@ fun ItemPageScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var summaryText by remember { mutableStateOf("No summary available.") }
 
-    LaunchedEffect(items) {
+    LaunchedEffect(Unit) {
         try {
             selectedItem = items.find { it.id == itemId }
             summaryText = getSummaryText(selectedItem)
@@ -119,11 +119,11 @@ fun ItemPageScreen(
                         .padding(top = 70.dp, start = 30.dp, end = 30.dp)
                 ) {
                     Text(
-                        text = seelctedFolder.title,
+                        text = selectedFolder.title,
                         style = MaterialTheme.typography.h4,
                         color = Color.White
                     )
-                    seelctedFolder.description?.let { description ->
+                    selectedFolder.description?.let { description ->
                         Text(
                             text = description,
                             style = MaterialTheme.typography.subtitle1,
