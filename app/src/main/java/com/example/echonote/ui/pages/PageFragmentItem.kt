@@ -1,3 +1,5 @@
+package com.example.echonote.ui.pages
+
 import android.widget.TextView
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,25 +31,23 @@ import io.noties.markwon.ext.latex.JLatexMathPlugin
 import kotlinx.serialization.json.Json
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import com.example.echonote.data.models.FolderModel
 import kotlinx.serialization.Serializable
 
 @Composable
-fun PageFragmentItem(
+fun ItemPageScreen(
     navController: NavHostController,
-    folderId: Long,
+    seelctedFolder: Folder,
+    items: MutableList<Item>,
     itemId: Long,
 ) {
-    var folder by remember { mutableStateOf<Folder?>(null) }
-    var items by remember { mutableStateOf<List<Item>>(emptyList()) }
     var selectedItem by remember { mutableStateOf<Item?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var summaryText by remember { mutableStateOf("No summary available.") }
 
-    LaunchedEffect(folderId) {
+    LaunchedEffect(items) {
         try {
-            folder = SupabaseClient.getFolder(folderId)
-            items = SupabaseClient.loadItems(folderId)
             selectedItem = items.find { it.id == itemId }
             summaryText = getSummaryText(selectedItem)
         } catch (e: Exception) {
@@ -83,7 +83,7 @@ fun PageFragmentItem(
                 }
             }
         }
-    } else if (folder != null && selectedItem != null) {
+    } else if (selectedItem != null) {
         val context = LocalContext.current
         val markwon = remember {
             Markwon.builder(context)
@@ -119,11 +119,11 @@ fun PageFragmentItem(
                         .padding(top = 70.dp, start = 30.dp, end = 30.dp)
                 ) {
                     Text(
-                        text = folder!!.title,
+                        text = seelctedFolder!!.title,
                         style = MaterialTheme.typography.h4,
                         color = Color.White
                     )
-                    folder!!.description?.let { description ->
+                    seelctedFolder!!.description?.let { description ->
                         Text(
                             text = description,
                             style = MaterialTheme.typography.subtitle1,
@@ -210,11 +210,9 @@ data class SummaryData(
 
 // get summary text for an item
 private fun getSummaryText(item: Item?): String {
-    if (item != null) {
-        val json = Json { ignoreUnknownKeys = true }
-        val summaryString = item.summary.toString()
-        val summaryData = runCatching { json.decodeFromString<SummaryData>(summaryString) }.getOrNull()
-        return summaryData?.summary?.replace("\\n", "\n") ?: "No summary available."
-    }
-    return "Item not Found."
+    if(item == null) return "Item not Found."
+    val json = Json { ignoreUnknownKeys = true }
+    val summaryString = item.summary.toString()
+    val summaryData = runCatching { json.decodeFromString<SummaryData>(summaryString) }.getOrNull()
+    return summaryData?.summary?.replace("\\n", "\n") ?: "No summary available."
 }

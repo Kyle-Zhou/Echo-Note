@@ -36,22 +36,14 @@ import kotlinx.coroutines.launch
 fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
 @Composable
-fun HomePageScreen(navController: NavHostController) {
+fun HomePageScreen(navController: NavHostController, folderModel:FolderModel) {
     Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
         val name = SupabaseClient.getName()
-        val folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
         val viewModel by remember { mutableStateOf(ViewFolderModel(folderModel)) }
         val folderController by remember { mutableStateOf(FolderController(folderModel)) }
         var showNewFolderDialog by remember { mutableStateOf(false) }
         val coroutineScope = rememberCoroutineScope()
         var errorMessage by remember { mutableStateOf("") }
-
-        LaunchedEffect(Unit) {
-            val uuid = SupabaseClient.getCurrentUserID()
-            SupabaseClient.setCurrentUser(uuid)
-            folderModel.init()
-            SupabaseClient.logCurrentSession()
-        }
 
         Column(
             modifier = Modifier
@@ -192,7 +184,9 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                         .align(Alignment.CenterVertically)
                         .padding(end = if (!expanded) 8.dp else 0.dp)
                 )
-                Column(modifier = Modifier.weight(1f).padding(start = if (expanded) 8.dp else 0.dp)){
+                Column(modifier = Modifier
+                    .weight(1f)
+                    .padding(start = if (expanded) 8.dp else 0.dp)){
                     Text(
                         text = folder.title,
                         style = MaterialTheme.typography.h6,

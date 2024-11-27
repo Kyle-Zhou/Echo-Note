@@ -1,6 +1,5 @@
 package com.example.echonote.ui
 
-import PageFragmentItem
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,9 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Checklist
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -29,14 +26,25 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.echonote.R
+import com.example.echonote.data.models.FolderModel
+import com.example.echonote.data.models.ItemModel
+import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.ui.pages.AddPageScreen
 import com.example.echonote.ui.pages.HomePageScreen
+import com.example.echonote.ui.pages.ItemPageScreen
 import com.example.echonote.ui.pages.LoginPageScreen
 import com.example.echonote.ui.pages.SignupPageScreen
 import com.example.echonote.ui.pages.TestPageScreen
+import com.example.echonote.ui.pages.currentMoment
 import com.example.echonote.ui.theme.EchoNoteTheme
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.Json
+
+// Utility to get the current time
+fun currentMoment() = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,7 +103,16 @@ fun MyApp() {
             startDestination = "login",
             Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomePageScreen(navController) }
+            composable("home") {
+                val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
+                LaunchedEffect(Unit) {
+                    val uuid = SupabaseClient.getCurrentUserID()
+                    SupabaseClient.setCurrentUser(uuid)
+                    folderModel.init()
+                    SupabaseClient.logCurrentSession()
+                }
+                HomePageScreen(navController, folderModel)
+            }
             composable("add") { AddPageScreen() }
             composable("test") { TestPageScreen() }
             composable("login") {
@@ -118,9 +135,14 @@ fun MyApp() {
                     navArgument("itemId") { type = NavType.LongType },
                 )
             ) { backStackEntry ->
-                val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
                 val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
-                PageFragmentItem(navController, folderId, itemId)
+                val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
+                val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
+                val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
+                var seelctedFolder = folderModel.folders.find{ it.id == folderId }
+                if(seelctedFolder != null) {
+                    ItemPageScreen(navController, seelctedFolder, itemModel.items, itemId)
+                }
             }
         }
 

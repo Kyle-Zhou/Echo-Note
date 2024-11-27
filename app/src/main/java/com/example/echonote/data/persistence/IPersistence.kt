@@ -15,14 +15,12 @@ interface IPersistence {
 
 //    TODO: Separate into multiple interfaces
     suspend fun createFolder(title: String, description: String?, created_on: LocalDateTime, update_on: LocalDateTime): Folder
-    suspend fun getFolder(folderId: Long): Folder
     suspend fun loadFolders(): List<Folder>
     suspend fun saveFolders(folders: List<Folder>)
     suspend fun saveFolder(folder: Folder)
     suspend fun deleteFolder(id: Long)
 
     suspend fun createItem(folder_id: Long, title: String, summary: JsonElement, created_on: LocalDateTime, update_on: LocalDateTime): Item
-    suspend fun getItem(itemId: Long): Item
     suspend fun loadItems(folderId: Long): List<Item>
     suspend fun saveItems(items: List<Item>)
     suspend fun saveItem(item: Item)

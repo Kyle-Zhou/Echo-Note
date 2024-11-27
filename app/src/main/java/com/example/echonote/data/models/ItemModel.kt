@@ -43,12 +43,6 @@ class ItemModel(
         notifySubscribers()
     }
 
-    suspend fun getItem(itemId: Long): Item {
-        val current = items.find { it.id != itemId }
-        if(current == null) throw IllegalArgumentException("No id $itemId exists")
-        return current;
-    }
-
     suspend fun changeFolder(id: Long, folderId: Long) {
 //        Attempting to change the folder to the current so we don't do anything
         if(folderId == this.folderId) return

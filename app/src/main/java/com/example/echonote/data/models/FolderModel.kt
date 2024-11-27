@@ -9,7 +9,7 @@ import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.datetime.LocalDateTime
 
 class FolderModel(
-        private val persistence: IPersistence,
+        val persistence: IPersistence,
         private val dateTimeCreator: () -> LocalDateTime
     ): IPublisher() {
     val folders: MutableList<Folder> = emptyList<Folder>().toMutableList()
@@ -39,7 +39,7 @@ class FolderModel(
     }
 
     fun getFolder(folderId: Long): Folder {
-        val current = folders.find { it.id != folderId }
+        val current = folders.find { it.id == folderId }
         if(current == null) throw IllegalArgumentException("No id $folderId exists")
         return current;
     }
