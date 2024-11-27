@@ -139,9 +139,9 @@ fun MyApp() {
                 val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
                 val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
                 val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
-                var seelctedFolder = folderModel.folders.find{ it.id == folderId }
-                if(seelctedFolder != null) {
-                    ItemPageScreen(navController, seelctedFolder, itemModel.items, itemId)
+                val selectedFolder = folderModel.folders.find{ it.id == folderId }
+                if(selectedFolder != null) {
+                    ItemPageScreen(navController, selectedFolder, itemModel.items, itemId)
                 }
             }
         }

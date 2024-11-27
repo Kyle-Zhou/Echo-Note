@@ -119,11 +119,11 @@ fun ItemPageScreen(
                         .padding(top = 70.dp, start = 30.dp, end = 30.dp)
                 ) {
                     Text(
-                        text = seelctedFolder!!.title,
+                        text = seelctedFolder.title,
                         style = MaterialTheme.typography.h4,
                         color = Color.White
                     )
-                    seelctedFolder!!.description?.let { description ->
+                    seelctedFolder.description?.let { description ->
                         Text(
                             text = description,
                             style = MaterialTheme.typography.subtitle1,
