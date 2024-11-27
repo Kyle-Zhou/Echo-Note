@@ -114,7 +114,11 @@ fun MyApp() {
                 }
                 HomePageScreen(navController, folderModel)
             }
-            composable("add") { AddPageScreen() }
+            composable("add") {
+                AddPageScreen(
+                    onCancel = { navController.navigate("home") }
+                )
+            }
             composable("test") { TestPageScreen() }
             composable("login") {
                 LoginPageScreen(
@@ -142,8 +146,7 @@ fun MyApp() {
                 val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
                 val selectedFolder = folderModel.folders.find{ it.id == folderId }
                 if(selectedFolder != null) {
-                    LaunchedEffect(Unit) { itemModel.init() }
-                    ItemPageScreen(navController, selectedFolder, itemModel.items, itemId)
+                    ItemPageScreen(navController, selectedFolder, itemModel, itemId)
                 }
             }
         }

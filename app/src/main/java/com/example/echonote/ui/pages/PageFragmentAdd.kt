@@ -39,9 +39,8 @@ import com.example.echonote.ui.components.RightRoundedRadioButton
 import kotlinx.coroutines.launch
 import java.io.File
 
-@Preview
 @Composable
-fun AddPageScreen(navController: NavController = rememberNavController()) {
+fun AddPageScreen(onCancel: () -> Unit) {
     val summarization = remember { Summarization() }
     var selectedOption by remember { mutableStateOf("Default") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
@@ -53,7 +52,7 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
 
     var selectedMode by remember { mutableStateOf("Record") }
     var textInput by remember { mutableStateOf("") }
-    val recordedText by remember { mutableStateOf("Recorded Text will appear here") }
+    var recordedText by remember { mutableStateOf("Recorded Text will appear here") }
     val isRecordMode = selectedMode == "Record"
 
     var summaryText by remember { mutableStateOf("") } // Summarized text
@@ -161,7 +160,9 @@ fun AddPageScreen(navController: NavController = rememberNavController()) {
             ) {
                 Button(
                     onClick = {
-                        // TO-DO:Logic to go back home here
+                        textInput = ""
+                        recordedText = ""
+                        onCancel()
                     },
                     modifier = Modifier
                         .height(35.dp)

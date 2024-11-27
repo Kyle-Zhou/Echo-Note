@@ -25,30 +25,29 @@ import androidx.navigation.NavHostController
 import com.example.echonote.R
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
-import com.example.echonote.data.persistence.SupabaseClient
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.latex.JLatexMathPlugin
 import kotlinx.serialization.json.Json
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
-import com.example.echonote.data.models.FolderModel
+import com.example.echonote.data.models.ItemModel
 import kotlinx.serialization.Serializable
 
 @Composable
 fun ItemPageScreen(
     navController: NavHostController,
     selectedFolder: Folder,
-    items: MutableList<Item>,
+    itemModel: ItemModel,
     itemId: Long,
 ) {
     var selectedItem by remember { mutableStateOf<Item?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var summaryText by remember { mutableStateOf("No summary available.") }
-
     LaunchedEffect(Unit) {
         try {
-            selectedItem = items.find { it.id == itemId }
+            itemModel.init()
+            selectedItem = itemModel.items.find { it.id == itemId }
             summaryText = getSummaryText(selectedItem)
         } catch (e: Exception) {
             errorMessage = e.localizedMessage ?: "An error occurred while fetching data."
@@ -163,7 +162,7 @@ fun ItemPageScreen(
                             expanded = isDropdownExpanded,
                             onDismissRequest = { isDropdownExpanded = false }
                         ) {
-                            items.forEach { item ->
+                            itemModel.items.forEach { item ->
                                 DropdownMenuItem(
                                     onClick = {
                                         selectedItem = item
