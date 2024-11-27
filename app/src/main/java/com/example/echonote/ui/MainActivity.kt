@@ -67,6 +67,7 @@ fun MyApp() {
     // Get the current backstack entry to check the current screen
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -104,7 +105,6 @@ fun MyApp() {
             Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
                 LaunchedEffect(Unit) {
                     val uuid = SupabaseClient.getCurrentUserID()
                     SupabaseClient.setCurrentUser(uuid)
@@ -138,7 +138,6 @@ fun MyApp() {
                 val itemId = backStackEntry.arguments?.getLong("itemId") ?: -1L
                 val folderId = backStackEntry.arguments?.getLong("folderId") ?: -1L
                 val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
-                val folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
                 val selectedFolder = folderModel.folders.find{ it.id == folderId }
                 if(selectedFolder != null) {
                     ItemPageScreen(navController, selectedFolder, itemModel.items, itemId)
