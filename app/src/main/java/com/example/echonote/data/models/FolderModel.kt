@@ -9,7 +9,7 @@ import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.datetime.LocalDateTime
 
 class FolderModel(
-        val persistence: IPersistence,
+        private val persistence: IPersistence,
         private val dateTimeCreator: () -> LocalDateTime
     ): IPublisher() {
     val folders: MutableList<Folder> = emptyList<Folder>().toMutableList()
