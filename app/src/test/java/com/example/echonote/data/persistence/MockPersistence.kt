@@ -48,10 +48,6 @@ class MockPersistence(dateTimeCreator: () -> LocalDateTime): IPersistence {
         return folder
     }
 
-    override suspend fun getFolder(folderId: Long): Folder {
-        return mockFolders.find { it.id == folderId }
-            ?: throw IllegalArgumentException("Folder not found for folderId=$folderId")
-    }
     override fun setCurrentUser(userId: String) {
 
     }
@@ -83,11 +79,6 @@ class MockPersistence(dateTimeCreator: () -> LocalDateTime): IPersistence {
         val item = Item(newId, folder_id, title, summary, created_on, update_on)
         mockItems.add(item)
         return item
-    }
-
-    override suspend fun getItem(itemId: Long): Item {
-        return mockItems.find { it.id == itemId }
-            ?: throw IllegalArgumentException("Item not found for itemId=$itemId")
     }
 
     override suspend fun loadItems(folderId: Long): List<Item> {
