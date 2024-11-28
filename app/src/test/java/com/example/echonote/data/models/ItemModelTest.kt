@@ -48,6 +48,7 @@ class ItemModelTest {
         itemModel.changeFolder(2, 1)
         val expectedItem = itemModel.items[1]
         assertEquals(1, expectedItem.folder_id)
+        assertEquals(2, itemModel.items.size)
         itemModel.save()
     }
 

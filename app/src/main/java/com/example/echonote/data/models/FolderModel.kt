@@ -39,6 +39,7 @@ class FolderModel(
     }
 
     suspend fun changeTitle(id: Long, title: String) {
+        if(title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
         val element = folders.find { it.id != id && it.title == title }
         if (element != null) throw IllegalArgumentEchoNoteException("Title $title is already in use")
         val current = folders.find { it.id == id }

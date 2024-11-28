@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Error
@@ -18,6 +19,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.echonote.R
+import com.example.echonote.data.models.FolderModel
 
 @Composable
 fun TextInputDialog(text: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, defaultTextInput: String="") {
@@ -157,6 +159,62 @@ fun ErrorDialog(errorMessage: String, onDismiss: () -> Unit) {
                 modifier = Modifier.padding(vertical = 10.dp)
             ) {
                 Text("Dismiss", color = Color.White)
+            }
+        }
+    }
+}
+
+
+@Composable
+fun FolderModelDialog(text:String, folderModel: FolderModel, onConfirm: (Long) -> Unit, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.medium,
+            color = colorResource(id = R.color.blue),
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .background(color = colorResource(id = R.color.blue))
+                    .heightIn(max = 400.dp)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = text,
+                    color = Color.White,
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier.padding(bottom = 16.dp),
+                    textAlign = TextAlign.Center
+                )
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(bottom = 16.dp)
+                ) {
+                    items(folderModel.folders.size) { index ->
+                        val folder = folderModel.folders[index]
+                        TextButton(
+                            onClick = { onConfirm(folder.id) },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = folder.title,
+                                color = Color.White,
+                                style = MaterialTheme.typography.h6
+                            )
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = onDismiss,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.orange)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Dismiss", color = Color.White)
+                }
             }
         }
     }
