@@ -118,6 +118,18 @@ class FolderModelTest {
     }
 
     @Test
+    fun changeTitleBadEmpty() = runTest {
+        val folderModel = createFolderModel()
+        try {
+            folderModel.changeTitle(1, "")
+            assert(false)
+        } catch (_: EmptyArgumentEchoNoteException) {
+            assert(true)
+        }
+        folderModel.save()
+    }
+
+    @Test
     fun changeDescriptionGood() = runTest {
         val folderModel = createFolderModel()
         folderModel.changeDescription(1, "Change description")

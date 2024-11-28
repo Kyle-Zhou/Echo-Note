@@ -79,6 +79,19 @@ class FolderControllerTest {
     }
 
     @Test
+    fun changeTitleBadEmpty() = runTest {
+        val folderModel = createFolderModel()
+        val folderController = FolderController(folderModel)
+        try {
+            folderController.invoke(FolderControllerEvent.RENAME, 3, "")
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assert(true)
+        }
+        folderController.invoke(FolderControllerEvent.SAVE)
+    }
+
+    @Test
     fun changeDescriptionGood() = runTest {
         val folderModel = createFolderModel()
         val folderController = FolderController(folderModel)

@@ -42,12 +42,26 @@ class ItemModel(
         notifySubscribers()
     }
 
+    fun get(id: Long): Item {
+        val element = items.find { it.id == id }
+        if(element == null) throw NotFoundEchoNoteException("Id $id doesn't exist for this item")
+        return element
+    }
+
+    /**
+     * Low level operation to add a item manually to the in-memory items list for the model
+     *
+     * @warning This method doesn't perform any checks and doesn't add the item to the persistence
+     */
+    fun moveIn(item: Item) {
+        items.add(item)
+        notifySubscribers()
+    }
+
     suspend fun changeFolder(id: Long, folderId: Long) {
 //        Attempting to change the folder to the current so we don't do anything
         if(folderId == this.folderId) return
-
-        val element = items.find { it.id == id }
-        if(element == null) throw NotFoundEchoNoteException("Id $id doesn't exist for this item")
+        val element = get(id)
 
         element.folder_id = folderId
         element.updated_on = dateTimeCreator()
@@ -58,9 +72,7 @@ class ItemModel(
 
     suspend fun changeTitle(id: Long, title: String) {
         if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
-
-        val item = items.find { it.id == id }
-        if (item == null) throw NotFoundEchoNoteException("Id $id doesn't exist")
+        val item = get(id)
 
         // Inside each folder, the title must be unique
         val folderItems = items.filter { it.folder_id == item.folder_id && it.id != id && it.title == title}
@@ -69,12 +81,11 @@ class ItemModel(
         item.title = title
         item.updated_on = dateTimeCreator()
         persistence.saveItem(item)
+        notifySubscribers()
     }
 
     suspend fun changeSummary(id: Long, summary: JsonElement) {
-        val item = items.find { it.id == id }
-        if(item == null) throw NotFoundEchoNoteException("Id $id doesn't exist")
-
+        val item = get(id)
         item.summary = summary
         item.updated_on = dateTimeCreator()
         persistence.saveItem(item)
