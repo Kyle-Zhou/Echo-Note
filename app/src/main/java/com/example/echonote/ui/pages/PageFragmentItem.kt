@@ -35,10 +35,10 @@ import kotlinx.serialization.Serializable
 
 @Composable
 fun ItemPageScreen(
-    navController: NavHostController,
     selectedFolder: Folder,
     itemModel: ItemModel,
     itemId: Long,
+    onBack: () -> Unit
 ) {
     var selectedItem by remember { mutableStateOf<Item?>(null) }
     var isLoading by remember { mutableStateOf(true) }
@@ -77,7 +77,7 @@ fun ItemPageScreen(
                     style = MaterialTheme.typography.h5
                 )
                 Spacer(modifier = Modifier.height(20.dp))
-                Button(onClick = { navController.popBackStack() }) {
+                Button(onClick = { onBack() }) {
                     Text("Back")
                 }
             }
@@ -93,7 +93,7 @@ fun ItemPageScreen(
         Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Button(
-                    onClick = { navController.popBackStack() },
+                    onClick = { onBack() },
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .padding(top = 20.dp, start = 16.dp),

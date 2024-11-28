@@ -146,7 +146,7 @@ fun MyApp() {
                 val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
                 val selectedFolder = folderModel.folders.find{ it.id == folderId }
                 if(selectedFolder != null) {
-                    ItemPageScreen(navController, selectedFolder, itemModel, itemId)
+                    ItemPageScreen(selectedFolder, itemModel, itemId, onBack = { navController.navigate("home") })
                 }
             }
         }
