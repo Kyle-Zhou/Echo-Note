@@ -15,6 +15,8 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.ext.latex.JLatexMathPlugin
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import com.example.echonote.R
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -37,6 +39,7 @@ fun BottomSheetFragment(summaryText: String, isLoading: Boolean, onClose: () -> 
                 modifier = Modifier
                     .background(colorResource(id = R.color.white_variant))
                     .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     text = "Summary",
