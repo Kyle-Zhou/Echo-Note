@@ -39,6 +39,7 @@ import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.IllegalStateEchoNoteException
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
@@ -53,15 +54,15 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
     var expanded by remember { mutableStateOf(false) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     val folderId: Long = folder.id
-    val itemModel by remember { mutableStateOf<ItemModel>(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
+    val itemModel by remember(folderId) { mutableStateOf(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
     var dropdownOption by remember { mutableStateOf(FolderCardDropdownItem.NONE) }
     val coroutineScope = rememberCoroutineScope()
     var errorMessage by remember { mutableStateOf("") }
-    val viewModel by remember { mutableStateOf(ViewItemModel(itemModel)) }
+    val viewModel by remember(folderId, itemModel) { mutableStateOf(ViewItemModel(itemModel)) }
+    itemController.attach(itemModel)
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(folderId) {
         itemModel.init()
-        itemController.attach(itemModel)
     }
 
     fun defaultDismiss() { dropdownOption = FolderCardDropdownItem.NONE }
@@ -220,6 +221,7 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                     .fillMaxWidth()
             ) {
                 viewModel.items.forEach { item ->
+                    println("Item in FolderCard: ${item.id}")
                     ItemCard(item, itemController, navController, folder, folderModel)
                 }
             }

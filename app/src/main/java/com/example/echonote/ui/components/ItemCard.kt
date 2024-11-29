@@ -47,7 +47,6 @@ fun ItemCard(item: Item, itemController: ItemController, navController: NavContr
     val coroutineScope = rememberCoroutineScope()
     var errorMessage by remember { mutableStateOf("") }
     val itemId = item.id
-    println("folderModel.folders: ${folderModel.folders}")
 
     fun defaultDismiss() { dropdownOption = ItemCardDropdownItem.NONE }
 
