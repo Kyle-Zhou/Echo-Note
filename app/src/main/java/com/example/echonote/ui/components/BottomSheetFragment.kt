@@ -192,7 +192,7 @@ fun BottomSheetFragment(summaryText: String, itemModel: ItemModel, isLoading: Bo
                             }
                             SheetState.SAVED -> {
                                 Text(
-                                    text = "Note successfully saved!",
+                                    text = "Note saved!",
                                     color = colorResource(id = R.color.blue),
                                     modifier = Modifier.align(Alignment.CenterVertically)
                                 )
