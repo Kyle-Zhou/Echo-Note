@@ -13,19 +13,14 @@ class FolderModel(
         private val dateTimeCreator: () -> LocalDateTime
     ): IPublisher() {
     val folders: MutableList<Folder> = emptyList<Folder>().toMutableList()
-    var isInitialized = false
 
     /**
      * Returns true if this call initialized the model
      */
-    suspend fun init(): Boolean {
-        if (isInitialized) {
-            return false
-        }
+    suspend fun init() {
+        folders.clear()
         folders.addAll(persistence.loadFolders().toMutableList())
-        isInitialized = true
         notifySubscribers()
-        return true
     }
 
     suspend fun add(title: String, description: String?) {

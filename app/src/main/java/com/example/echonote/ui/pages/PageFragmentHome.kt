@@ -43,6 +43,11 @@ fun HomePageScreen(navController: NavHostController, folderModel: FolderModel) {
         var errorMessage by remember { mutableStateOf("") }
         val itemController by remember { mutableStateOf(ItemController()) }
 
+        LaunchedEffect(Unit) {
+            folderModel.init()
+            SupabaseClient.logCurrentSession()
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()

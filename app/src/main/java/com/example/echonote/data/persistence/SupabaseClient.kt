@@ -20,6 +20,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.time.Duration.Companion.minutes
+import java.util.UUID
 
 
 object SupabaseClient: IPersistence {
@@ -48,19 +49,14 @@ object SupabaseClient: IPersistence {
         supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN4cnd2d2VlcHJpdmt3c2dpbXVuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjgwNzAyNzYsImV4cCI6MjA0MzY0NjI3Nn0.NNlLAQGMKQaOppISuPxkYsNzVv9thgaYLH2wwR65RE8"
     ) {
         install(Auth) {
-            minimalSettings() // disables session saving and auto-refreshing
+//            minimalSettings() // disables session saving and auto-refreshing
         }
         install(Postgrest)
         install(Storage)
     }
-    private var currentUser: String? = null
 
     override fun getCurrentUser(): String? {
-        return currentUser
-    }
-
-    override fun setCurrentUser(userId: String) {
-        currentUser = userId
+        return getCurrentUserID()
     }
 
     override suspend fun createFolder(
@@ -69,7 +65,7 @@ object SupabaseClient: IPersistence {
         created_on: LocalDateTime,
         update_on: LocalDateTime
     ): Folder {
-        val tempFolder = TempFolder(currentUser!!, title, description, created_on, update_on)
+        val tempFolder = TempFolder(getCurrentUser()!!, title, description, created_on, update_on)
         val folder = getFoldersTable().insert(tempFolder) {
             select()
         }.decodeSingle<Folder>()
@@ -78,7 +74,7 @@ object SupabaseClient: IPersistence {
 
     override suspend fun loadFolders(): List<Folder> {
         return getFoldersTable().select{
-            filter { eq("user_id", currentUser!!) }
+            filter { eq("user_id", getCurrentUser()!!) }
             order("id", order = Order.ASCENDING)
         }.decodeList<Folder>()
     }
@@ -172,6 +168,11 @@ object SupabaseClient: IPersistence {
         logCurrentSession()
     }
 
+    override suspend fun logoutUser() {
+        supabase.auth.signOut()
+        logCurrentSession()
+    }
+
     suspend fun uploadAudioFileAndGetUrl(filePath: String, fileData: ByteArray) : String {
         val bucket = supabase.storage.from("audio-storage")
         bucket.upload(filePath, fileData) {
@@ -201,6 +202,25 @@ object SupabaseClient: IPersistence {
         return name
     }
 
+    private fun getProfilesTable(): PostgrestQueryBuilder {
+        return supabase.from("profiles")
+    }
+
+    override suspend fun editUserName(newUserName: String) {
+        // update display name field in auth table
+        supabase.auth.updateUser {
+            data {
+                put("first_name", JsonPrimitive(newUserName)) // vs. name?
+            }
+        }
+        // update profiles table in postgres
+        val uuid = UUID.fromString(getCurrentUserID())
+        getProfilesTable().update({
+            set("first_name", newUserName)
+        }) {
+            filter { eq("id", uuid) }
+        }
+    }
 
 
 }

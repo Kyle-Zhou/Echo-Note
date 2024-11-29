@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,7 +36,7 @@ import com.example.echonote.ui.pages.HomePageScreen
 import com.example.echonote.ui.pages.ItemPageScreen
 import com.example.echonote.ui.pages.LoginPageScreen
 import com.example.echonote.ui.pages.SignupPageScreen
-import com.example.echonote.ui.pages.TestPageScreen
+import com.example.echonote.ui.pages.ProfilePageScreen
 import com.example.echonote.ui.pages.currentMoment
 import com.example.echonote.ui.theme.EchoNoteTheme
 import kotlinx.coroutines.launch
@@ -106,12 +107,6 @@ fun MyApp() {
             Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                LaunchedEffect(Unit) {
-                    val uuid = SupabaseClient.getCurrentUserID()
-                    SupabaseClient.setCurrentUser(uuid)
-                    folderModel.init()
-                    SupabaseClient.logCurrentSession()
-                }
                 HomePageScreen(navController, folderModel)
             }
             composable("add") {
@@ -119,7 +114,11 @@ fun MyApp() {
                     onCancel = { navController.navigate("home") }
                 )
             }
-            composable("test") { TestPageScreen() }
+            composable("profile") {
+                ProfilePageScreen(
+                    onLogout = { navController.navigate("login") }
+                )
+            }
             composable("login") {
                 LoginPageScreen(
                     onLoginSuccess = { navController.navigate("home") },
@@ -174,11 +173,11 @@ fun BottomNavigationBar(navController: NavController) {
             }
         )
         BottomNavigationItem(
-            icon = { Icon(Icons.Filled.Checklist, contentDescription = "Test") },
-            label = { Text("Test") },
-            selected = currentDestination?.hierarchy?.any { it.route == "test" } == true,
+            icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
+            label = { Text("Profile") },
+            selected = currentDestination?.hierarchy?.any { it.route == "profile" } == true,
             onClick = {
-                navController.navigate("test") {
+                navController.navigate("profile") {
                     popUpTo("home")
                 }
             }
