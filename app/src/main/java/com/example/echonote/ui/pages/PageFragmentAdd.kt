@@ -43,7 +43,6 @@ import java.io.File
 
 enum class AudioState {IDLE, RECORDING,  TRANSCRIBING, LOADING}
 
-@Preview
 @Composable
 fun AddPageScreen(onCancel: () -> Unit, navController: NavController = rememberNavController()) {
     val summarization = remember { Summarization() }
