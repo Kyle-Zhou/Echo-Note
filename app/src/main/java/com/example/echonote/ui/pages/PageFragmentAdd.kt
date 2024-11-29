@@ -1,9 +1,10 @@
 package com.example.echonote.ui.pages
 
+import Transcribe
 import android.Manifest
 import android.content.Context
 import android.media.MediaRecorder
-import android.os.Environment
+import android.net.Uri
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,52 +31,62 @@ import androidx.navigation.compose.rememberNavController
 import com.example.echonote.R
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.models.FolderModel
+import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.resources.Summarization
-import com.example.echonote.resources.Transcribe
 import com.example.echonote.ui.components.BottomSheetFragment
 import com.example.echonote.ui.components.LeftRoundedRadioButton
 import com.example.echonote.ui.components.RightRoundedRadioButton
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 
+enum class AudioState {IDLE, RECORDING,  TRANSCRIBING, LOADING}
+
+@Preview
 @Composable
-fun AddPageScreen(onCancel: () -> Unit) {
+fun AddPageScreen(onCancel: () -> Unit, navController: NavController = rememberNavController()) {
     val summarization = remember { Summarization() }
+
     var selectedOption by remember { mutableStateOf("Default") }
     var isDropdownExpanded by remember { mutableStateOf(false) }
-    //  TO-DO: replace with user's db
-    var folderModel by remember {mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment))}
+    var folderId by remember { mutableLongStateOf(-1L) }
+    var folderModel by remember { mutableStateOf<FolderModel>(FolderModel(SupabaseClient, ::currentMoment)) }
+
     LaunchedEffect(Unit) {
         folderModel.init()
+        if (folderModel.folders.isEmpty()) {
+            delay(500)
+        }
+        folderModel.folders.firstOrNull()?.let { firstFolder ->
+            folderId = firstFolder.id
+            selectedOption = firstFolder.title
+        }
     }
+
+    var itemModel by remember(folderId) { mutableStateOf(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
+    LaunchedEffect(Unit) { itemModel.init() }
 
     var selectedMode by remember { mutableStateOf("Record") }
     var textInput by remember { mutableStateOf("") }
     var recordedText by remember { mutableStateOf("Recorded Text will appear here") }
     val isRecordMode = selectedMode == "Record"
+    var summaryText by remember { mutableStateOf("") }
+    var isSheetVisible by remember { mutableStateOf(false) }
 
-    var summaryText by remember { mutableStateOf("") } // Summarized text
-    var isSheetVisible by remember { mutableStateOf(false) } // BottomSheetFragment
-    var isLoading by remember { mutableStateOf(false) } // Loading State
-    var isRecording by remember { mutableStateOf(false) } // Recoding State
+    var audioState by remember { mutableStateOf(AudioState.IDLE) }
+
     val context = LocalContext.current
     val scaffoldState = rememberScaffoldState()
     val coroutineScope = rememberCoroutineScope()
-
     val mediaRecorder = remember { MediaRecorder() }
-    val transcribe = remember { Transcribe() }
-
+    val transcribe = Transcribe()
+    val tempFile = remember { File.createTempFile("temp_audio", ".mp4", context.cacheDir) }
 
     fun hideKeyboard() {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         imm.hideSoftInputFromWindow((context as android.app.Activity).currentFocus?.windowToken, 0)
     }
-
-    var isUploading by remember { mutableStateOf(false) }
-
-    // temporary file for storing audio recording
-    val tempFile = remember { File.createTempFile("temp_audio", ".mp4", context.cacheDir) }
 
     fun startRecording() {
         try {
@@ -87,9 +98,43 @@ fun AddPageScreen(onCancel: () -> Unit) {
                 prepare()
                 start()
             }
-            isRecording = true
+            audioState = AudioState.RECORDING
         } catch (e: Exception) {
             println("Failed to start recording: ${e.message}")
+        }
+    }
+
+    fun getInputStreamFromUri(uri: Uri): ByteArray? {
+        return try {
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                inputStream.readBytes()
+            }
+        } catch (e: Exception) {
+            println("Error reading input stream: ${e.message}")
+            null
+        }
+    }
+
+    suspend fun uploadAndTranscribeAudio(filePath: String? = null, uri: Uri? = null) {
+        audioState = AudioState.TRANSCRIBING
+        try {
+            val audioData = filePath?.let { File(it).readBytes() } ?: uri?.let { getInputStreamFromUri(it) }
+            if (audioData == null || audioData.isEmpty()) throw Exception("Audio data is empty or unavailable")
+            val fileName = "audio_${System.currentTimeMillis()}.mp4"
+            val audioFileUrl = SupabaseClient.uploadAudioFileAndGetUrl(fileName, audioData)
+            if (audioFileUrl.isNullOrEmpty()) throw Exception("Failed to upload audio file")
+            val transcriptionResult = transcribe.transcribeAudio(audioFileUrl)
+            if (transcriptionResult.isNullOrEmpty()) throw Exception("Transcription failed")
+            recordedText = transcriptionResult
+            coroutineScope.launch {
+                scaffoldState.snackbarHostState.showSnackbar("Audio uploaded and transcribed successfully!")
+            }
+        } catch (e: Exception) {
+            coroutineScope.launch {
+                scaffoldState.snackbarHostState.showSnackbar("Upload failed: ${e.message}")
+            }
+        } finally {
+            audioState = AudioState.IDLE
         }
     }
 
@@ -99,47 +144,37 @@ fun AddPageScreen(onCancel: () -> Unit) {
                 stop()
                 reset()
             }
-            isRecording = false
-            isUploading = true
-
-            val audioByteArray = tempFile.readBytes()
-
-            // upload to Supabase
-            val fileName = "audio_${System.currentTimeMillis()}.mp4"
-            try {
-                val audioFileUrl = SupabaseClient.uploadAudioFileAndGetUrl(fileName, audioByteArray)
-                transcribe.transcribeAudio(audioFileUrl)
-                coroutineScope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar("Recording uploaded and transcribed successfully!")
-                }
-            } catch (e: Exception) {
-                coroutineScope.launch {
-                    scaffoldState.snackbarHostState.showSnackbar("Upload failed: ${e.message}")
-                }
-            }
-
-            tempFile.delete()
-            isUploading = false
-
+            uploadAndTranscribeAudio(tempFile.absolutePath)
         } catch (e: Exception) {
             println("Recording Failed: ${e.message}")
-            isUploading = false
             coroutineScope.launch {
                 scaffoldState.snackbarHostState.showSnackbar("Recording failed: ${e.message}")
+            }
+            audioState = AudioState.IDLE
+        }
+    }
+
+    val audioPermission = Manifest.permission.RECORD_AUDIO
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) startRecording() else coroutineScope.launch {
+            scaffoldState.snackbarHostState.showSnackbar("Permission denied")
+        }
+    }
+
+    val pickAudioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            coroutineScope.launch { uploadAndTranscribeAudio(uri = uri) }
+        } else {
+            coroutineScope.launch {
+                scaffoldState.snackbarHostState.showSnackbar("No audio file selected")
             }
         }
     }
 
-    // request audio permission for recording
-    val audioPermission = Manifest.permission.RECORD_AUDIO
-    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
-        if (isGranted) {
-            startRecording() // start recording if permission is granted
-        } else {
-            coroutineScope.launch {
-                scaffoldState.snackbarHostState.showSnackbar("Permission denied")
-            }
-        }
+    fun openFilePicker() {
+        pickAudioLauncher.launch("audio/*")
     }
 
     Scaffold(
@@ -156,7 +191,7 @@ fun AddPageScreen(onCancel: () -> Unit) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 20.dp, start = 5.dp,)
+                    .padding(top = 20.dp, start = 5.dp)
             ) {
                 Button(
                     onClick = {
@@ -183,14 +218,13 @@ fun AddPageScreen(onCancel: () -> Unit) {
                     Text("Cancel", color = colorResource(id = R.color.white))
                 }
             }
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 55.dp, start = 30.dp, end = 30.dp, bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Box{
+                Box {
                     OutlinedButton(
                         onClick = { isDropdownExpanded = true },
                         modifier = Modifier.fillMaxWidth().height(50.dp),
@@ -203,9 +237,11 @@ fun AddPageScreen(onCancel: () -> Unit) {
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(selectedOption,
+                            Text(
+                                selectedOption,
                                 color = colorResource(id = R.color.white),
-                                fontSize = MaterialTheme.typography.h6.fontSize)
+                                fontSize = MaterialTheme.typography.h6.fontSize
+                            )
                             Icon(
                                 Icons.Filled.ArrowDropDown,
                                 contentDescription = "Dropdown Arrow",
@@ -226,6 +262,11 @@ fun AddPageScreen(onCancel: () -> Unit) {
                                 onClick = {
                                     selectedOption = option.title
                                     isDropdownExpanded = false
+                                    folderId = option.id
+                                    itemModel = ItemModel(SupabaseClient, ::currentMoment, folderId)
+                                    coroutineScope.launch {
+                                        itemModel.init()
+                                    }
                                 },
                                 modifier = Modifier.background(color = colorResource(id = R.color.white))
                             ) {
@@ -238,53 +279,69 @@ fun AddPageScreen(onCancel: () -> Unit) {
                         }
                     }
                 }
-
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LeftRoundedRadioButton(
                         selected = isRecordMode,
                         text = "Record",
                         onClick = { selectedMode = "Record" }
                     )
-
                     RightRoundedRadioButton(
                         selected = !isRecordMode,
                         text = "Text",
                         onClick = { selectedMode = "Text" }
                     )
-
                     Spacer(modifier = Modifier.width(16.dp))
-
-                    // Submit Button
                     Button(
                         onClick = {
                             hideKeyboard()
-                            if (textInput.isNotEmpty()) {
-                                isLoading = true
-                                isSheetVisible = true
-                                summarization.getSummary(textInput) { response ->
-                                    summaryText = response
-                                    isLoading = false
+                            if (isRecordMode) {
+                                if (recordedText != "Recorded Text will appear here") {
+                                    audioState = AudioState.LOADING
+                                    isSheetVisible = true
+                                    summarization.getSummary(recordedText) { response ->
+                                        summaryText = response
+                                        audioState = AudioState.IDLE
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        scaffoldState.snackbarHostState.showSnackbar("Please record or upload audio first!")
+                                    }
                                 }
                             } else {
-                                coroutineScope.launch {
-                                    scaffoldState.snackbarHostState.showSnackbar("Please input text to summarize!")
+                                if (textInput.isNotEmpty()) {
+                                    audioState = AudioState.LOADING
+                                    isSheetVisible = true
+                                    summarization.getSummary(textInput) { response ->
+                                        summaryText = response
+                                        audioState = AudioState.IDLE
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        scaffoldState.snackbarHostState.showSnackbar("Please input text to summarize!")
+                                    }
                                 }
                             }
                         },
-                        enabled = !isLoading,
-                        colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.orange)),
+                        enabled = audioState == AudioState.IDLE,
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = colorResource(id = R.color.orange),
+                            disabledBackgroundColor = colorResource(id = R.color.orange).copy(alpha = 0.6f)
+                        ),
                         modifier = Modifier
                             .height(35.dp)
                             .width(110.dp),
                         shape = RoundedCornerShape(50)
                     ) {
-                        if (isLoading) {
+                        if (audioState == AudioState.LOADING) {
                             CircularProgressIndicator(
                                 color = colorResource(id = R.color.white),
                                 modifier = Modifier.size(20.dp)
                             )
                         } else {
-                            Text("SUBMIT", color = colorResource(id = R.color.white))
+                            Text(
+                                "Submit",
+                                color = colorResource(id = R.color.white)
+                            )
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 Icons.Filled.AutoAwesome,
@@ -295,43 +352,75 @@ fun AddPageScreen(onCancel: () -> Unit) {
                         }
                     }
                 }
-
-                // Record function here - Kyle?
+                Spacer(modifier = Modifier.height(10.dp))
                 if (isRecordMode) {
                     Button(
                         onClick = {
-                            if (isRecording) {
-                                coroutineScope.launch {
-                                    try {
+                            when (audioState) {
+                                AudioState.RECORDING -> {
+                                    coroutineScope.launch {
                                         stopRecording()
-                                    } catch (e: Exception) {
-                                        println("Recording Failed. ${e.localizedMessage}")
                                     }
                                 }
-                            } else {
-                                launcher.launch(audioPermission)
+                                AudioState.IDLE -> {
+                                    launcher.launch(audioPermission)
+                                }
+                                else -> {
+                                    // do nothing
+                                }
                             }
                         },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = if (isRecording) colorResource(id = R.color.red) else colorResource(id = R.color.blue)
+                            backgroundColor = when (audioState) {
+                                AudioState.RECORDING -> colorResource(id = R.color.red)
+                                else -> colorResource(id = R.color.blue)
+                            }
                         )
                     ) {
-                        Text(if (isRecording) "Stop Recording" else "Record", color = colorResource(id = R.color.white))
+                        Text(
+                            when (audioState) {
+                                AudioState.RECORDING -> "Stop Recording"
+                                else -> "Record"
+                            },
+                            color = colorResource(id = R.color.white)
+                        )
                     }
+                    Button(
+                        onClick = { openFilePicker() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = colorResource(id = R.color.blue)
+                        )
+                    ) {
+                        Text(
+                            "Upload Audio File",
+                            color = colorResource(id = R.color.white)
+                        )
+                    }
+
                     Text(
                         recordedText,
                         style = MaterialTheme.typography.body2,
                         modifier = Modifier.padding(vertical = 8.dp),
                         color = colorResource(id = R.color.white)
                     )
+
+                    if (audioState == AudioState.TRANSCRIBING) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally),
+                            color = colorResource(id = R.color.white)
+                        )
+                    }
                 } else {
                     OutlinedTextField(
                         value = textInput,
                         onValueChange = { textInput = it },
-                        label = { Text("Text Input here", color = colorResource(id = R.color.white)) },
+                        label = { Text("Enter text", color = colorResource(id = R.color.white)) },
                         colors = TextFieldDefaults.outlinedTextFieldColors(
                             textColor = colorResource(id = R.color.white),
                             cursorColor = colorResource(id = R.color.white),
@@ -339,22 +428,22 @@ fun AddPageScreen(onCancel: () -> Unit) {
                             unfocusedBorderColor = colorResource(id = R.color.white),
                             placeholderColor = colorResource(id = R.color.white)
                         ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
             }
-
             if (isSheetVisible) {
                 BottomSheetFragment(
                     summaryText = summaryText,
-                    isLoading = isLoading,
+                    isLoading = audioState == AudioState.LOADING,
+                    itemModel = itemModel,
                     onClose = {
                         isSheetVisible = false
-                    }
+                        summaryText = ""
+                    },
                 )
             }
         }
     }
 }
+
