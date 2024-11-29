@@ -96,9 +96,6 @@ fun LoginPageScreen(
                     coroutineScope.launch {
                         try {
                             SupabaseClient.loginUser(email, password)
-                            // Set current user to current session's uuid locally
-                            val uuid = SupabaseClient.getCurrentUserID()
-                            SupabaseClient.setCurrentUser(uuid)
                             onLoginSuccess("Login Successful")
                         } catch (e: Exception) {
                             errorMessage = "Login failed. ${e.localizedMessage}"
