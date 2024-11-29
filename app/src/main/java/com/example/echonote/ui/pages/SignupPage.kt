@@ -66,7 +66,7 @@ fun SignupPageScreen(
                 )
                 Text(
                     text = "Echo Note",
-                    style = MaterialTheme.typography.h6,
+                    style = MaterialTheme.typography.h5,
                     modifier = Modifier.padding(bottom = 20.dp)
                 )
 
