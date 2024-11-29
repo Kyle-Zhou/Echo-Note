@@ -15,19 +15,14 @@ class ItemModel(
     val folderId: Long
 ): IPublisher() {
     val items: MutableList<Item> = emptyList<Item>().toMutableList()
-    var isInitialized = false
 
     /**
      * Returns true if this call initialized the model
      */
-    suspend fun init(): Boolean {
-        if (isInitialized) {
-            return false
-        }
+    suspend fun init() {
+        items.clear()
         items.addAll(persistence.loadItems(folderId).toMutableList())
-        isInitialized = true
         notifySubscribers()
-        return true
     }
 
     suspend fun add(title: String, summary: JsonElement) {

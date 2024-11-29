@@ -156,9 +156,6 @@ fun SignupPageScreen(
                         try {
                             // Create user in supabase auth table
                             SupabaseClient.signupUser(email, password, name)
-                            // Set current user to current session's uuid locally
-                            val uuid = SupabaseClient.getCurrentUserID()
-                            SupabaseClient.setCurrentUser(uuid)
                             // Create "Default" folder
                             folderController.invoke(FolderControllerEvent.ADD, title = "Default", description = "Hi! This is your default folder!")
                             onSignupSuccess("Signup Successful")

@@ -7,11 +7,11 @@ import kotlinx.serialization.json.JsonElement
 
 interface IPersistence {
 
-    fun setCurrentUser(userId: String)
     fun getCurrentUser(): String?
 
     fun getCurrentUserID(): String
     fun getName(): String
+    suspend fun editUserName(newUserName: String)
 
 //    TODO: Separate into multiple interfaces
     suspend fun createFolder(title: String, description: String?, created_on: LocalDateTime, update_on: LocalDateTime): Folder
@@ -28,4 +28,5 @@ interface IPersistence {
 
     suspend fun signupUser(userEmail: String, userPassword: String, userName: String)
     suspend fun loginUser(userEmail: String, userPassword: String)
+    suspend fun logoutUser()
 }
