@@ -8,7 +8,9 @@ import androidx.compose.ui.graphics.Color
 private val LightColorPalette = lightColors(
     primary = Color(0xFF003049),
     primaryVariant = Color(0xFF00496E),
-    secondary = Color(0xFF79D2E6)
+    secondary = Color(0xFF79D2E6),
+    background = Color(0xFF003049),
+    surface = Color.White
 )
 
 @Composable
@@ -16,10 +18,8 @@ fun EchoNoteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colors = LightColorPalette
-
     MaterialTheme(
-        colors = colors,
+        colors = LightColorPalette,
         content = content
     )
 }
