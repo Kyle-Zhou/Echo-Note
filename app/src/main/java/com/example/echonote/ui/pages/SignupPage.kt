@@ -21,7 +21,9 @@ import com.example.echonote.data.persistence.SupabaseClient
 import com.example.echonote.ui.components.ErrorDialog
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun SignupPageScreen(
@@ -123,6 +125,7 @@ fun SignupPageScreen(
                         // Email Input
                         OutlinedTextField(
                             value = email,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                             onValueChange = { email = it },
                             label = { Text("Email") },
                             isError = emailError.isNotEmpty(),
@@ -153,6 +156,7 @@ fun SignupPageScreen(
                         // Password Input
                         OutlinedTextField(
                             value = password,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             onValueChange = { password = it },
                             label = { Text("Password") },
                             isError = passwordError.isNotEmpty(),
@@ -184,6 +188,7 @@ fun SignupPageScreen(
                         // Confirm Password Input
                         OutlinedTextField(
                             value = confirmPassword,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                             onValueChange = { confirmPassword = it },
                             label = { Text("Confirm Password") },
                             isError = confirmPasswordError.isNotEmpty(),
