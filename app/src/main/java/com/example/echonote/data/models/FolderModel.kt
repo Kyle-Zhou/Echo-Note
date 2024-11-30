@@ -1,7 +1,7 @@
 package com.example.echonote.data.models
 
-import com.example.echonote.data.persistence.IPersistence
 import com.example.echonote.data.entities.Folder
+import com.example.echonote.data.persistence.IPersistenceFolder
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.IllegalStateEchoNoteException
@@ -9,7 +9,7 @@ import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.datetime.LocalDateTime
 
 class FolderModel(
-        private val persistence: IPersistence,
+        private val persistence: IPersistenceFolder,
         private val dateTimeCreator: () -> LocalDateTime
     ): IPublisher() {
     val folders: MutableList<Folder> = emptyList<Folder>().toMutableList()
@@ -57,12 +57,7 @@ class FolderModel(
     suspend fun del(id: Long) {
         if (folders.size <= 1) throw IllegalStateEchoNoteException("Cannot delete all folders")
         persistence.deleteFolder(id)
-        folders.removeIf{it.id == id}
+        folders.removeIf { it.id == id }
         notifySubscribers()
     }
-
-    suspend fun save() {
-        persistence.saveFolders(folders)
-    }
-
 }

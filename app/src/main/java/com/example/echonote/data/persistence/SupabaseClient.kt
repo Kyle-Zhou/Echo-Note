@@ -23,7 +23,7 @@ import kotlin.time.Duration.Companion.minutes
 import java.util.UUID
 
 
-object SupabaseClient: IPersistence {
+object SupabaseClient: IPersistenceItem, IPersistenceFolder, IAuth {
     @Serializable
     private data class TempItem (
         var folder_id: Long,
@@ -55,17 +55,13 @@ object SupabaseClient: IPersistence {
         install(Storage)
     }
 
-    override fun getCurrentUser(): String? {
-        return getCurrentUserID()
-    }
-
     override suspend fun createFolder(
         title: String,
         description: String?,
         created_on: LocalDateTime,
         update_on: LocalDateTime
     ): Folder {
-        val tempFolder = TempFolder(getCurrentUser()!!, title, description, created_on, update_on)
+        val tempFolder = TempFolder(getCurrentUserID(), title, description, created_on, update_on)
         val folder = getFoldersTable().insert(tempFolder) {
             select()
         }.decodeSingle<Folder>()
@@ -74,7 +70,7 @@ object SupabaseClient: IPersistence {
 
     override suspend fun loadFolders(): List<Folder> {
         return getFoldersTable().select{
-            filter { eq("user_id", getCurrentUser()!!) }
+            filter { eq("user_id", getCurrentUserID()) }
             order("id", order = Order.ASCENDING)
         }.decodeList<Folder>()
     }
@@ -87,10 +83,6 @@ object SupabaseClient: IPersistence {
         }) {
             filter { eq("id", folder.id) }
         }
-    }
-
-    override suspend fun saveFolders(folders: List<Folder>) {
-        getFoldersTable().upsert(folders)
     }
 
     override suspend fun deleteFolder(id: Long) {
@@ -118,10 +110,6 @@ object SupabaseClient: IPersistence {
             filter { eq("folder_id", folderId) }
             order("id", order = Order.ASCENDING)
         }.decodeList<Item>()
-    }
-
-    override suspend fun saveItems(items: List<Item>) {
-        getItemsTable().upsert(items)
     }
 
     override suspend fun saveItem(item: Item) {

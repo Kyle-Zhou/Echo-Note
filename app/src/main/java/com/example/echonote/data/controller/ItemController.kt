@@ -6,7 +6,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.Json
 
 enum class ItemControllerEvent {
-    ADD, DEL, RENAME, MOVE, SAVE, CHANGE_CONTENT
+    ADD, DEL, RENAME, MOVE, CHANGE_CONTENT
 }
 
 class ItemController {
@@ -39,7 +39,6 @@ class ItemController {
                 val recipientItemModel = getItemModel(folderId)
                 recipientItemModel.moveIn(item)
             }
-            ItemControllerEvent.SAVE -> itemModel.save()
             ItemControllerEvent.RENAME -> itemModel.changeTitle(id, title)
             ItemControllerEvent.CHANGE_CONTENT -> itemModel.changeSummary(id, summary)
         }
