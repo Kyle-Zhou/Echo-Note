@@ -3,7 +3,7 @@ package com.example.echonote.data.controller
 import com.example.echonote.data.models.FolderModel
 
 enum class FolderControllerEvent {
-    ADD, DEL, RENAME, CHANGE_DESC, SAVE
+    ADD, DEL, RENAME, CHANGE_DESC
 }
 
 class FolderController (private val folderModel: FolderModel) {
@@ -13,7 +13,6 @@ class FolderController (private val folderModel: FolderModel) {
             FolderControllerEvent.DEL -> folderModel.del(id)
             FolderControllerEvent.RENAME -> folderModel.changeTitle(id, title)
             FolderControllerEvent.CHANGE_DESC -> folderModel.changeDescription(id, description)
-            FolderControllerEvent.SAVE -> folderModel.save()
         }
     }
 }

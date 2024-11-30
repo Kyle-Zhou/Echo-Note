@@ -1,7 +1,7 @@
 package com.example.echonote.data.models
 
 import com.example.echonote.data.entities.Item
-import com.example.echonote.data.persistence.IPersistence
+import com.example.echonote.data.persistence.IPersistenceItem
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.NotFoundEchoNoteException
@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonElement
 
 // Each ItemModel is only responsible for managing its own folder
 class ItemModel(
-    private val persistence: IPersistence,
+    private val persistence: IPersistenceItem,
     private val dateTimeCreator: () -> LocalDateTime,
     val folderId: Long
 ): IPublisher() {
@@ -92,9 +92,4 @@ class ItemModel(
         items.removeIf{it.id == id}
         notifySubscribers()
     }
-
-    suspend fun save() {
-        persistence.saveItems(items)
-    }
-
 }

@@ -10,6 +10,6 @@ data class Item(
     var folder_id: Long,
     var title: String,
     var summary: JsonElement,
-    var created_on: LocalDateTime,
+    val created_on: LocalDateTime,
     var updated_on: LocalDateTime,
 )

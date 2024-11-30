@@ -9,6 +9,6 @@ data class Folder(
     val user_id: String,
     var title: String,
     var description: String?,
-    var created_on: LocalDateTime,
+    val created_on: LocalDateTime,
     var updated_on: LocalDateTime,
 )

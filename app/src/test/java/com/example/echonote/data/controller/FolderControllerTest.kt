@@ -1,7 +1,9 @@
 package com.example.echonote.data.controller
 import com.example.echonote.data.models.FolderModel
-import com.example.echonote.data.persistence.MockPersistence
+import com.example.echonote.data.persistence.MockPersistenceFolder
+import com.example.echonote.data.persistence.MockPersistenceItem
 import com.example.echonote.dateTimeCreator
+import com.example.echonote.utils.EmptyArgumentEchoNoteException
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -9,7 +11,7 @@ import org.junit.Test
 
 class FolderControllerTest {
     private suspend fun createFolderModel(): FolderModel {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
+        val mockPersistence = MockPersistenceFolder(::dateTimeCreator)
         val folderModel = FolderModel(mockPersistence, ::dateTimeCreator)
         folderModel.init()
         return folderModel
@@ -21,7 +23,6 @@ class FolderControllerTest {
         val folderController = FolderController(folderModel)
         folderController.invoke(FolderControllerEvent.ADD, title = "Add")
         assertEquals(4, folderModel.folders.size)
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -51,7 +52,6 @@ class FolderControllerTest {
         // This folder hasn't been added before
         folderController.invoke(FolderControllerEvent.DEL, 10)
         assertEquals(3, folderModel.folders.size)
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -62,7 +62,6 @@ class FolderControllerTest {
         val expectedItem = folderModel.folders[2]
         assertEquals("Hello", expectedItem.title)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -75,7 +74,6 @@ class FolderControllerTest {
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -85,10 +83,9 @@ class FolderControllerTest {
         try {
             folderController.invoke(FolderControllerEvent.RENAME, 3, "")
             assert(false)
-        } catch (_: IllegalArgumentEchoNoteException) {
+        } catch (_: EmptyArgumentEchoNoteException) {
             assert(true)
         }
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -99,7 +96,6 @@ class FolderControllerTest {
         val expectedItem = folderModel.folders[0]
         assertEquals("Change description", expectedItem.description)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
     @Test
@@ -110,7 +106,6 @@ class FolderControllerTest {
         val expectedItem = folderModel.folders[0]
         assertEquals(null, expectedItem.description)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        folderController.invoke(FolderControllerEvent.SAVE)
     }
 
 }

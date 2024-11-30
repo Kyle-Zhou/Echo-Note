@@ -1,7 +1,7 @@
 package com.example.echonote.data.controller
 
 import com.example.echonote.data.models.ItemModel
-import com.example.echonote.data.persistence.MockPersistence
+import com.example.echonote.data.persistence.MockPersistenceItem
 import com.example.echonote.dateTimeCreator
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
@@ -13,7 +13,7 @@ import org.junit.Test
 
 class ItemControllerTest {
     private suspend fun createItemModel(id: Long = 1): ItemModel {
-        val mockPersistence = MockPersistence(::dateTimeCreator)
+        val mockPersistence = MockPersistenceItem(::dateTimeCreator)
         val itemModel = ItemModel(mockPersistence, ::dateTimeCreator, id)
         itemModel.init()
         return itemModel
@@ -55,7 +55,6 @@ class ItemControllerTest {
 
         itemController.invoke(ItemControllerEvent.ADD, 1.toLong(),  title="5 2", summary = Json.decodeFromString("""{"value":"test 5"}"""))
         assertEquals(3, itemModel.items.size)
-        itemModel.save()
     }
 
     @Test
@@ -71,7 +70,6 @@ class ItemControllerTest {
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -84,7 +82,6 @@ class ItemControllerTest {
         val expectedItem = itemModel.items[1]
         assertEquals(1, expectedItem.folder_id)
         assertEquals(2, itemModel.items.size)
-        itemModel.save()
     }
 
     @Test
@@ -99,7 +96,6 @@ class ItemControllerTest {
         assertEquals(1, itemModel.items.size)
         assertEquals(null, itemModel.items.find { it.id == 2.toLong() })
         assertEquals(3, itemModel2.items.size)
-        itemModel.save()
     }
 
     @Test
@@ -117,7 +113,6 @@ class ItemControllerTest {
         } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -135,7 +130,6 @@ class ItemControllerTest {
         } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -148,7 +142,6 @@ class ItemControllerTest {
         val expectedItem = itemModel.items[1]
         assertEquals("New Title", expectedItem.title)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        itemModel.save()
     }
 
     @Test
@@ -164,7 +157,6 @@ class ItemControllerTest {
         } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -179,7 +171,6 @@ class ItemControllerTest {
         } catch (_: EmptyArgumentEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -195,7 +186,6 @@ class ItemControllerTest {
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -208,7 +198,6 @@ class ItemControllerTest {
         val expectedItem = itemModel.items[0]
         assertEquals("""{"value":"New Summary"}""", expectedItem.summary.toString())
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
-        itemModel.save()
     }
 
     @Test
@@ -224,7 +213,6 @@ class ItemControllerTest {
         } catch (_: NotFoundEchoNoteException) {
             assert(true)
         }
-        itemModel.save()
     }
 
     @Test
@@ -235,7 +223,6 @@ class ItemControllerTest {
 
         itemController.invoke(ItemControllerEvent.DEL,1.toLong(), id = 2)// Id 2 exists
         assertEquals(1, itemModel.items.size)
-        itemModel.save()
     }
 
     @Test
@@ -247,6 +234,5 @@ class ItemControllerTest {
         // Id 10 doesn't exist
         itemController.invoke(ItemControllerEvent.DEL, 1.toLong(), id=10)
         assertEquals(2, itemModel.items.size)
-        itemModel.save()
     }
 }
