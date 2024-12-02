@@ -17,11 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.material.icons.filled.CopyAll
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.navigation.NavHostController
 import com.example.echonote.R
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.entities.Item
@@ -30,7 +32,9 @@ import io.noties.markwon.ext.latex.JLatexMathPlugin
 import kotlinx.serialization.json.Json
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.rememberCoroutineScope
 import com.example.echonote.data.models.ItemModel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 
 @Composable
@@ -44,6 +48,9 @@ fun ItemPageScreen(
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var summaryText by remember { mutableStateOf("No summary available.") }
+    val scaffoldState = rememberScaffoldState()
+    val coroutineScope = rememberCoroutineScope()
+    val clipboardManager = LocalClipboardManager.current
     LaunchedEffect(Unit) {
         try {
             itemModel.init()
@@ -56,145 +63,176 @@ fun ItemPageScreen(
         }
     }
 
-    if (isLoading) {
-        Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                CircularProgressIndicator(color = Color.White)
-            }
-        }
-    } else if (errorMessage != null) {
-        Surface(color = colorResource(id = R.color.red), modifier = Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = errorMessage ?: "Unknown error",
-                    color = Color.White,
-                    style = MaterialTheme.typography.h5
-                )
-                Spacer(modifier = Modifier.height(20.dp))
-                Button(onClick = { onBack() }) {
-                    Text("Back")
+    Scaffold(
+        scaffoldState = scaffoldState,
+        snackbarHost = { SnackbarHost(scaffoldState.snackbarHostState) }
+    ) { padding ->
+        if (isLoading) {
+            Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    CircularProgressIndicator(color = Color.White)
                 }
             }
-        }
-    } else if (selectedItem != null) {
-        val context = LocalContext.current
-        val markwon = remember {
-            Markwon.builder(context)
-                .usePlugin(JLatexMathPlugin.create(20f, 20f))
-                .build()
-        }
-
-        Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                Button(
-                    onClick = { onBack() },
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(top = 20.dp, start = 16.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
-                        contentColor = Color.Transparent
-                    ),
-                    elevation = ButtonDefaults.elevation(0.dp),
-                    shape = RoundedCornerShape(50)
-                ) {
-                    Icon(
-                        Icons.Filled.ArrowBackIos,
-                        contentDescription = "Back to Home",
-                        tint = colorResource(id = R.color.white),
-                        modifier = Modifier.size(15.dp)
-                    )
-                    Text("Back", color = Color.White)
-                }
-
+        } else if (errorMessage != null) {
+            Surface(color = colorResource(id = R.color.red), modifier = Modifier.fillMaxSize()) {
                 Column(
-                    modifier = Modifier.fillMaxSize()
-                        .padding(top = 70.dp, start = 30.dp, end = 30.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = selectedFolder.title,
-                        style = MaterialTheme.typography.h4,
-                        color = Color.White
+                        text = errorMessage ?: "Unknown error",
+                        color = Color.White,
+                        style = MaterialTheme.typography.h5
                     )
-                    selectedFolder.description?.let { description ->
-                        Text(
-                            text = description,
-                            style = MaterialTheme.typography.subtitle1,
-                            color = Color.White
-                        )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    Button(onClick = { onBack() }) {
+                        Text("Back")
                     }
-                    var isDropdownExpanded by remember { mutableStateOf(false) }
-                    Box {
-                        Button(
-                            onClick = { isDropdownExpanded = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = selectedItem!!.title,
-                                    color = Color.Black,
-                                    style = MaterialTheme.typography.subtitle1
-                                )
-                                Icon(
-                                    imageVector = Icons.Filled.ArrowForwardIos,
-                                    contentDescription = if (isDropdownExpanded) "Collapse" else "Expand",
-                                    tint = Color.Black,
-                                    modifier = Modifier
-                                        .rotate(if (isDropdownExpanded) 90f else 0f)
-                                        .align(Alignment.CenterVertically)
-                                        .padding(end = if (!isDropdownExpanded) 8.dp else 0.dp)
-                                )
-                            }
-                        }
-                        DropdownMenu(
-                            expanded = isDropdownExpanded,
-                            onDismissRequest = { isDropdownExpanded = false }
-                        ) {
-                            itemModel.items.forEach { item ->
-                                DropdownMenuItem(
-                                    onClick = {
-                                        selectedItem = item
-                                        summaryText = getSummaryText(selectedItem)
-                                        isDropdownExpanded = false
-                                    }
-                                ) {
-                                    Text(text = item.title)
-                                }
-                            }
-                        }
+                }
+            }
+        } else if (selectedItem != null) {
+            val context = LocalContext.current
+            val markwon = remember {
+                Markwon.builder(context)
+                    .usePlugin(JLatexMathPlugin.create(20f, 20f))
+                    .build()
+            }
+
+            Surface(color = colorResource(id = R.color.blue), modifier = Modifier.fillMaxSize()) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Button(
+                        onClick = { onBack() },
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(top = 20.dp, start = 16.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = Color.Transparent
+                        ),
+                        elevation = ButtonDefaults.elevation(0.dp),
+                        shape = RoundedCornerShape(50)
+                    ) {
+                        Icon(
+                            Icons.Filled.ArrowBackIos,
+                            contentDescription = "Back to Home",
+                            tint = colorResource(id = R.color.white),
+                            modifier = Modifier.size(15.dp)
+                        )
+                        Text("Back", color = Color.White)
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
                     Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                        modifier = Modifier.fillMaxSize()
+                            .padding(top = 70.dp, start = 30.dp, end = 30.dp)
                     ) {
-                        AndroidView(
-                            factory = { context ->
-                                TextView(context).apply {
-                                    setTextColor(android.graphics.Color.WHITE)
-                                    textSize = 18f
-                                    markwon.setMarkdown(this, summaryText)
-                                }
-                            },
-                            update = { textView ->
-                                markwon.setMarkdown(textView, summaryText)
-                            } // Force AndroidView to re-render with updated summaryText
+                        Text(
+                            text = selectedFolder.title,
+                            style = MaterialTheme.typography.h4,
+                            color = Color.White
                         )
-                        Spacer(modifier = Modifier.height(50.dp)) // Avoid overlapping with Add button
+                        selectedFolder.description?.let { description ->
+                            Text(
+                                text = description,
+                                style = MaterialTheme.typography.subtitle1,
+                                color = Color.White
+                            )
+                        }
+                        var isDropdownExpanded by remember { mutableStateOf(false) }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                Button(
+                                    onClick = { isDropdownExpanded = true },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = selectedItem!!.title,
+                                            color = Color.Black,
+                                            style = MaterialTheme.typography.subtitle1
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Filled.ArrowForwardIos,
+                                            contentDescription = if (isDropdownExpanded) "Collapse" else "Expand",
+                                            tint = Color.Black,
+                                            modifier = Modifier
+                                                .rotate(if (isDropdownExpanded) 90f else 0f)
+                                                .align(Alignment.CenterVertically)
+                                                .padding(end = if (!isDropdownExpanded) 8.dp else 0.dp)
+                                        )
+                                    }
+                                }
+                                DropdownMenu(
+                                    expanded = isDropdownExpanded,
+                                    onDismissRequest = { isDropdownExpanded = false }
+                                ) {
+                                    itemModel.items.forEach { item ->
+                                        DropdownMenuItem(
+                                            onClick = {
+                                                selectedItem = item
+                                                summaryText = getSummaryText(selectedItem)
+                                                isDropdownExpanded = false
+                                            }
+                                        ) {
+                                            Text(text = item.title)
+                                        }
+                                    }
+                                }
+                            }
+                            Button(
+                                onClick = {
+                                    clipboardManager.setText(AnnotatedString(summaryText))
+                                    coroutineScope.launch {
+                                        scaffoldState.snackbarHostState.showSnackbar("Item copied to clipboard")
+                                    }
+                                },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(backgroundColor = colorResource(id = R.color.orange)),
+                            ) {
+                                Icon(
+                                    Icons.Filled.CopyAll,
+                                    modifier = Modifier.size(24.dp),
+                                    contentDescription = "Copy Icon",
+                                    tint = colorResource(id = R.color.white)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(5.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            AndroidView(
+                                factory = { context ->
+                                    TextView(context).apply {
+                                        setTextColor(android.graphics.Color.WHITE)
+                                        textSize = 18f
+                                        markwon.setMarkdown(this, summaryText)
+                                    }
+                                },
+                                update = { textView ->
+                                    markwon.setMarkdown(textView, summaryText)
+                                } // Force AndroidView to re-render with updated summaryText
+                            )
+                            Spacer(modifier = Modifier.height(50.dp)) // Avoid overlapping with Add button
+                        }
                     }
                 }
             }
