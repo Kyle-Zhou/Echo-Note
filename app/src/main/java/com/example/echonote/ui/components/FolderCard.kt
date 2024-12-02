@@ -74,8 +74,8 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
                     folderController.invoke(FolderControllerEvent.RENAME, id = folderId, title = it)
                 } catch(_: EmptyArgumentEchoNoteException) {
                     errorMessage = "Folder name cannot be empty"
-                } catch (_: IllegalArgumentEchoNoteException) {
-                    errorMessage = "This title already exists."
+                } catch (e: IllegalArgumentEchoNoteException) {
+                    errorMessage = "${e.message}"
                 } catch (e: Exception) {
                     println(e)
                 }
@@ -86,12 +86,14 @@ fun FolderCard(folder: Folder, navController: NavHostController, folderControlle
         FolderCardDropdownItem.CHANGE_DESC -> TextInputDialog("Change Description",
             onSubmit = {
                 coroutineScope.launch {
-                    try{
+                    try {
                         folderController.invoke(
                             FolderControllerEvent.CHANGE_DESC,
                             id = folderId,
                             description = it
                         )
+                    } catch (e: IllegalArgumentEchoNoteException) {
+                        errorMessage = "${e.message}"
                     } catch (e: Exception) {
                         println("Error when changing description: $e")
                     }

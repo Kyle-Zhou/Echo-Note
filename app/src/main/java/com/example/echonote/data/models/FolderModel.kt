@@ -2,7 +2,9 @@ package com.example.echonote.data.models
 
 import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.persistence.IPersistenceFolder
+import com.example.echonote.utils.DESCRIPTION_LIMIT
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.FOLDER_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.IllegalStateEchoNoteException
 import com.example.echonote.utils.NotFoundEchoNoteException
@@ -25,6 +27,8 @@ class FolderModel(
 
     suspend fun add(title: String, description: String?) {
         if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+        if (title.length >= FOLDER_TITLE_LIMIT) throw IllegalArgumentEchoNoteException("Folder title must be under $FOLDER_TITLE_LIMIT characters")
+        if (description != null && description.length >= DESCRIPTION_LIMIT) throw IllegalArgumentEchoNoteException("Description must be under $DESCRIPTION_LIMIT characters")
         val element = folders.find { it.title == title }
         if (element != null) throw IllegalArgumentEchoNoteException("Title already in use")
         val currentTime = dateTimeCreator()
@@ -35,6 +39,7 @@ class FolderModel(
 
     suspend fun changeTitle(id: Long, title: String) {
         if(title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+        if (title.length >= FOLDER_TITLE_LIMIT) throw IllegalArgumentEchoNoteException("Folder title must be under $FOLDER_TITLE_LIMIT characters")
         val element = folders.find { it.id != id && it.title == title }
         if (element != null) throw IllegalArgumentEchoNoteException("Title $title is already in use")
         val current = folders.find { it.id == id }
@@ -46,6 +51,7 @@ class FolderModel(
     }
 
     suspend fun changeDescription(id: Long, description: String?) {
+        if (description != null && description.length >= DESCRIPTION_LIMIT) throw IllegalArgumentEchoNoteException("Description must be under $DESCRIPTION_LIMIT characters")
         val element = folders.find { it.id == id }
         if(element == null) throw NotFoundEchoNoteException("Id doesn't exist for this folder")
         element.description = description

@@ -4,6 +4,7 @@ import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.MockPersistenceItem
 import com.example.echonote.dateTimeCreator
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.ITEM_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.coroutines.test.runTest
@@ -69,6 +70,25 @@ class ItemControllerTest {
             assert(false)
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
+        }
+    }
+
+    @Test
+    fun addTooLongTitle() = runTest {
+        val itemModel = createItemModel()
+        val itemController = ItemController()
+        itemController.attach(itemModel)
+        assertEquals(2, itemModel.items.size)
+        val char = "x"
+        val title = char.repeat(ITEM_TITLE_LIMIT)
+        assertEquals(0, itemModel.items.count { it.title == title })
+
+        try {
+            itemController.invoke(ItemControllerEvent.ADD, 1L, title= title, summary = Json.decodeFromString("""{"value":"test 5"}"""))
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(0, itemModel.items.count { it.title == title })
+            assertEquals(2, itemModel.items.size)
         }
     }
 
@@ -185,6 +205,25 @@ class ItemControllerTest {
             assert(false)
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
+        }
+    }
+
+    @Test
+    fun changeTitleTooLong() = runTest {
+        val itemModel = createItemModel()
+        val itemController = ItemController()
+        itemController.attach(itemModel)
+        assertEquals(2, itemModel.items.size)
+        val char = "x"
+        val title = char.repeat(ITEM_TITLE_LIMIT)
+        assertEquals(0, itemModel.items.count { it.title == title })
+
+        try {
+            itemController.invoke(ItemControllerEvent.RENAME,1L, id=1, title = title)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(0, itemModel.items.count { it.title == title })
+            assertEquals(2, itemModel.items.size)
         }
     }
 

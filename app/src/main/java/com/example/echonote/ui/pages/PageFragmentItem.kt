@@ -33,6 +33,8 @@ import kotlinx.serialization.json.Json
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import com.example.echonote.data.models.ItemModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -164,7 +166,12 @@ fun ItemPageScreen(
                                         Text(
                                             text = selectedItem!!.title,
                                             color = Color.Black,
-                                            style = MaterialTheme.typography.subtitle1
+                                            style = MaterialTheme.typography.subtitle1,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(end = 8.dp)
                                         )
                                         Icon(
                                             imageVector = Icons.Filled.ArrowForwardIos,
@@ -173,7 +180,7 @@ fun ItemPageScreen(
                                             modifier = Modifier
                                                 .rotate(if (isDropdownExpanded) 90f else 0f)
                                                 .align(Alignment.CenterVertically)
-                                                .padding(end = if (!isDropdownExpanded) 8.dp else 0.dp)
+                                                .padding(end = if (!isDropdownExpanded) 0.dp else 4.dp)
                                         )
                                     }
                                 }
@@ -189,7 +196,10 @@ fun ItemPageScreen(
                                                 isDropdownExpanded = false
                                             }
                                         ) {
-                                            Text(text = item.title)
+                                            Text(
+                                                text = item.title,
+                                                fontWeight = if(item.title == selectedItem!!.title) FontWeight.Bold else null
+                                            )
                                         }
                                     }
                                 }

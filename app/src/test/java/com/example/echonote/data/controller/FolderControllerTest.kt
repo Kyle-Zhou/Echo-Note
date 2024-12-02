@@ -3,10 +3,13 @@ import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.persistence.MockPersistenceFolder
 import com.example.echonote.data.persistence.MockPersistenceItem
 import com.example.echonote.dateTimeCreator
+import com.example.echonote.utils.DESCRIPTION_LIMIT
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.FOLDER_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 class FolderControllerTest {
@@ -34,6 +37,55 @@ class FolderControllerTest {
             assert(false)
         } catch (_: IllegalArgumentEchoNoteException) {
             assert(true)
+        }
+    }
+
+    @Test
+    fun addTitleTooLong() = runTest {
+        val folderModel = createFolderModel()
+        val folderController = FolderController(folderModel)
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+
+        try {
+            folderController.invoke(FolderControllerEvent.ADD, title=title, description = "test")
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
+    fun addDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        val folderController = FolderController(folderModel)
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val description = char.repeat(DESCRIPTION_LIMIT)
+
+        try {
+            folderController.invoke(FolderControllerEvent.ADD, title="test", description = description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
+    fun addTitleAndDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        val folderController = FolderController(folderModel)
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+        val description = char.repeat(DESCRIPTION_LIMIT)
+
+        try {
+            folderController.invoke(FolderControllerEvent.ADD, title=title, description = description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
         }
     }
 
@@ -89,6 +141,22 @@ class FolderControllerTest {
     }
 
     @Test
+    fun changeTitleTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val folderController = FolderController(folderModel)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+        try {
+            folderController.invoke(FolderControllerEvent.RENAME, 1, title)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertNotEquals(title, folderModel.folders.find { it.id == 1L}!!.title)
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
     fun changeDescriptionGood() = runTest {
         val folderModel = createFolderModel()
         val folderController = FolderController(folderModel)
@@ -106,6 +174,22 @@ class FolderControllerTest {
         val expectedItem = folderModel.folders[0]
         assertEquals(null, expectedItem.description)
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
+    }
+
+    @Test
+    fun changeDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val folderController = FolderController(folderModel)
+        val char = "x"
+        val description = char.repeat(DESCRIPTION_LIMIT)
+        try {
+            folderController.invoke(FolderControllerEvent.CHANGE_DESC, 1, description=description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertNotEquals(description, folderModel.folders.find { it.id == 1L}!!.title)
+            assertEquals(3, folderModel.folders.size)
+        }
     }
 
 }
