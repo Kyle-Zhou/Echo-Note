@@ -23,7 +23,7 @@ fun sanitizeInput(input: String): String {
 
 class Summarization {
     private val url = "https://api.openai.com/v1/chat/completions"
-    private val apiKey = "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"
+    private val apiKey = "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"
     private val client = OkHttpClient()
 
     fun getSummary(question: String, callback: (String) -> Unit) {
@@ -37,7 +37,7 @@ class Summarization {
                 ),
                 Message(
                     role = "user",
-                    content = "Summarize the following lecture content into key takeaways. Start with a bold title (do not include the word 'title'), highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. Here is the lecture content: $sanitizedQuestion"
+                    content = "Summarize the following lecture content into key takeaways. Start with a bold title (do not include the word 'title'), highlight the main points, important terms, and any conclusions or actionable items. Make the summary concise, focusing on the core concepts. Do not include any closing sentences or unnecessary remarks. Here is the lecture content: $sanitizedQuestion"
                 )
             ),
             maxTokens = 1000,
