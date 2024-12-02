@@ -25,6 +25,7 @@ Android/mobile
 ## Project Links
 - [Project Proposal](../../wikis/Project-Proposal)
 - [Design Proposal](../../wikis/Design-Proposal)
+- [User Documentation](../../wikis/User-Documentation)
 
 ## Releases
 - [Version 1.1.0 Release](../../wikis/Version-1.1.0-Releases)
