@@ -77,6 +77,8 @@ fun ItemCard(item: Item, itemController: ItemController, navController: NavContr
                 coroutineScope.launch {
                     try {
                         itemController.invoke(ItemControllerEvent.MOVE, folder.id, id = itemId, folderId = it)
+                    } catch (e: IllegalArgumentEchoNoteException) {
+                        errorMessage = "${e.message}"
                     } catch (e: Exception) {
                         println(e)
                     }
