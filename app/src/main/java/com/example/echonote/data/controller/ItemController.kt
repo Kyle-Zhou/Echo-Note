@@ -35,8 +35,10 @@ class ItemController {
                 if(currentFolderId == folderId) return
 
                 val item = itemModel.get(id)
-                itemModel.changeFolder(id, folderId)
                 val recipientItemModel = getItemModel(folderId)
+                if (recipientItemModel.items.find { it.title == item.title } != null)
+                    throw IllegalArgumentEchoNoteException("Each item in a given folder must have a unique title")
+                itemModel.changeFolder(id, folderId)
                 recipientItemModel.moveIn(item)
             }
             ItemControllerEvent.RENAME -> itemModel.changeTitle(id, title)

@@ -133,6 +133,30 @@ class ItemControllerTest {
     }
 
     @Test
+    fun changeFolderDuplicate() = runTest {
+        val itemModel = createItemModel()
+        val itemController = ItemController()
+        itemController.attach(itemModel)
+        val itemModel2 = createItemModel(2)
+        itemController.attach(itemModel2)
+
+//        Setup to make sure that each folder has an item with the same name
+        itemController.invoke(ItemControllerEvent.RENAME, 1L, id=1, title = "3 2")
+        assertEquals(1, itemModel.items.count { it.title == "3 2" })
+        assertEquals("3 2", itemModel.items.find { it.id == 1L }!!.title)
+        assertEquals(1, itemModel2.items.count { it.title == "3 2" })
+
+        try {
+            // Move item 1 from folder 1 into folder 2
+            itemController.invoke(ItemControllerEvent.MOVE,1L, id=1, folderId = 2)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(1, itemModel.items.count { it.title == "3 2" })
+            assertEquals(1, itemModel2.items.count { it.title == "3 2" })
+        }
+    }
+
+    @Test
     fun changeTitleGood() = runTest {
         val itemModel = createItemModel()
         val itemController = ItemController()
