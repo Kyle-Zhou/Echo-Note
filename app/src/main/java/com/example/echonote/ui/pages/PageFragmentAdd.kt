@@ -17,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.icons.Icons
@@ -26,10 +25,7 @@ import androidx.compose.material.icons.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.ui.graphics.Color
-import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.echonote.R
-import com.example.echonote.data.entities.Folder
 import com.example.echonote.data.models.FolderModel
 import com.example.echonote.data.models.ItemModel
 import com.example.echonote.data.persistence.SupabaseClient
@@ -44,7 +40,7 @@ import java.io.File
 enum class AudioState {IDLE, RECORDING,  TRANSCRIBING, LOADING}
 
 @Composable
-fun AddPageScreen(onCancel: () -> Unit, navController: NavController = rememberNavController()) {
+fun AddPageScreen(onCancel: () -> Unit) {
     val summarization = remember { Summarization() }
 
     var selectedOption by remember { mutableStateOf("Default") }
@@ -64,7 +60,7 @@ fun AddPageScreen(onCancel: () -> Unit, navController: NavController = rememberN
     }
 
     var itemModel by remember(folderId) { mutableStateOf(ItemModel(SupabaseClient, ::currentMoment, folderId)) }
-    LaunchedEffect(Unit) { itemModel.init() }
+    LaunchedEffect(folderId) { itemModel.init() } // Re-init the model each time the folderId changes
 
     var selectedMode by remember { mutableStateOf("Record") }
     var textInput by remember { mutableStateOf("") }

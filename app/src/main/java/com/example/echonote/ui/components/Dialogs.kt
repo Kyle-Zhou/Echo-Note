@@ -22,7 +22,7 @@ import com.example.echonote.R
 import com.example.echonote.data.models.FolderModel
 
 @Composable
-fun TextInputDialog(text: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, defaultTextInput: String="") {
+fun TextInputDialog(text: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, defaultTextInput: String="", labelText: String? = null) {
     var textInput by remember { mutableStateOf(defaultTextInput) }
     Dialog(
         onDismissRequest = onDismiss
@@ -48,7 +48,8 @@ fun TextInputDialog(text: String, onSubmit: (String) -> Unit, onDismiss: () -> U
                     unfocusedBorderColor = Color.White,
                     placeholderColor = Color.White
                 ),
-                modifier = Modifier.padding(horizontal = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp),
+                label = { if(labelText != null) {Text(labelText, color = Color.White) } else null }
             )
             Row (
                 horizontalArrangement = Arrangement.SpaceEvenly,

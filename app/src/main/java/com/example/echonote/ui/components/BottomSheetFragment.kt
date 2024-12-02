@@ -22,8 +22,7 @@ import com.example.echonote.data.models.ItemModel
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
 
 enum class SheetState {IDLE, SAVING, SAVED }
 
@@ -37,15 +36,12 @@ fun BottomSheetFragment(summaryText: String, itemModel: ItemModel, isLoading: Bo
         skipHalfExpanded = true
     )
     var hasBeenShown by remember { mutableStateOf(false) }
-    val scaffoldState = rememberScaffoldState()
-
     var sheetSaveState by remember { mutableStateOf(SheetState.IDLE) }
     var showDialog by remember { mutableStateOf(false) }
-    var fileName by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         sheetSaveState = SheetState.IDLE
-        fileName = ""
     }
 
     LaunchedEffect(sheetState.currentValue) {
@@ -63,83 +59,35 @@ fun BottomSheetFragment(summaryText: String, itemModel: ItemModel, isLoading: Bo
             .build()
     }
 
+    if (errorMessage.isNotEmpty()) {
+        ErrorDialog(errorMessage) { errorMessage = "" }
+    }
+
     if (showDialog) {
-        Dialog(
-            onDismissRequest = { showDialog = false },
-            properties = DialogProperties(
-                usePlatformDefaultWidth = false
-            )
-        ) {
-            Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = Color.White,
-                modifier = Modifier.fillMaxWidth(0.92f)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        "Name your file",
-                        style = MaterialTheme.typography.h6,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
-
-                    OutlinedTextField(
-                        value = fileName,
-                        onValueChange = { fileName = it },
-                        label = { Text("File name") },
-                        colors = TextFieldDefaults.outlinedTextFieldColors(
-                            textColor = colorResource(id = R.color.blue),
-                            cursorColor = colorResource(id = R.color.blue),
-                            focusedBorderColor = colorResource(id = R.color.blue),
-                            unfocusedBorderColor = colorResource(id = R.color.blue),
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        TextButton(
-                            onClick = {
-                                showDialog = false
-                            }
-                        ) {
-                            Text("Cancel", color = colorResource(id = R.color.blue))
+        TextInputDialog(
+            text = "Name your item",
+            onSubmit = {
+                coroutineScope.launch {
+                    try {
+                        showDialog = false
+                        sheetSaveState = SheetState.SAVING
+                        val jsonSummary = buildJsonObject {
+                            put("summary", summaryText)
                         }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Button(
-                            onClick = {
-                                coroutineScope.launch {
-                                    try {
-                                        showDialog = false
-                                        sheetSaveState = SheetState.SAVING
-                                        val jsonSummary = buildJsonObject {
-                                            put("summary", summaryText)
-                                        }
-                                        itemModel.add(fileName, jsonSummary)
-                                        sheetSaveState = SheetState.SAVED
-                                    } catch (e: Exception) {
-                                        sheetSaveState = SheetState.IDLE
-                                        scaffoldState.snackbarHostState.showSnackbar("Failed to save note!")
-                                    }
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                backgroundColor = colorResource(id = R.color.blue)
-                            )
-                        ) {
-                            Text("Save", color = Color.White)
-                        }
+                        itemModel.add(it, jsonSummary)
+                        sheetSaveState = SheetState.SAVED
+                    } catch (e: IllegalArgumentEchoNoteException) {
+                        sheetSaveState = SheetState.IDLE
+                        errorMessage = "${e.message}"
+                    } catch (_: Exception) {
+                        sheetSaveState = SheetState.IDLE
+                        errorMessage = "Unknown error when trying to save note"
                     }
                 }
-            }
-        }
+            },
+            onDismiss = {showDialog = false},
+            labelText = "Item title"
+        )
     }
 
     ModalBottomSheetLayout(
