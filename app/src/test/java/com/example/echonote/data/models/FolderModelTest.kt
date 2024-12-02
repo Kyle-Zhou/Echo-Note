@@ -1,7 +1,9 @@
 package com.example.echonote.data.models
 import com.example.echonote.data.persistence.MockPersistenceFolder
 import com.example.echonote.dateTimeCreator
+import com.example.echonote.utils.DESCRIPTION_LIMIT
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.FOLDER_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.IllegalStateEchoNoteException
 import kotlinx.coroutines.test.runTest
@@ -51,6 +53,52 @@ class FolderModelTest {
             folderModel.add("", "test")
             assert(false)
         } catch (_: EmptyArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
+    fun addTitleTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+
+        try {
+            folderModel.add(title, "test")
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
+    fun addDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val description = char.repeat(DESCRIPTION_LIMIT)
+
+        try {
+            folderModel.add("test", description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
+    fun addTitleAndDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+        val description = char.repeat(DESCRIPTION_LIMIT)
+
+        try {
+            folderModel.add(title, description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
             assertEquals(3, folderModel.folders.size)
         }
     }
@@ -150,6 +198,21 @@ class FolderModelTest {
     }
 
     @Test
+    fun changeTitleTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val title = char.repeat(FOLDER_TITLE_LIMIT)
+        try {
+            folderModel.changeTitle(1, title)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertNotEquals(title, folderModel.folders.find { it.id == 1L}!!.title)
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
+
+    @Test
     fun changeDescriptionGood() = runTest {
         val folderModel = createFolderModel()
         assertEquals(3, folderModel.folders.size)
@@ -171,4 +234,18 @@ class FolderModelTest {
         assertEquals(dateTimeCreator(), expectedItem.updated_on)
     }
 
+    @Test
+    fun changeDescriptionTooLong() = runTest {
+        val folderModel = createFolderModel()
+        assertEquals(3, folderModel.folders.size)
+        val char = "x"
+        val description = char.repeat(DESCRIPTION_LIMIT)
+        try {
+            folderModel.changeDescription(1, description)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertNotEquals(description, folderModel.folders.find { it.id == 1L}!!.title)
+            assertEquals(3, folderModel.folders.size)
+        }
+    }
 }

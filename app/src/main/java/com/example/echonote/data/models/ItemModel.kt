@@ -3,6 +3,7 @@ package com.example.echonote.data.models
 import com.example.echonote.data.entities.Item
 import com.example.echonote.data.persistence.IPersistenceItem
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.ITEM_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.datetime.LocalDateTime
@@ -27,6 +28,7 @@ class ItemModel(
 
     suspend fun add(title: String, summary: JsonElement) {
         if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+        if (title.length >= ITEM_TITLE_LIMIT) throw IllegalArgumentEchoNoteException("Item title must be under $ITEM_TITLE_LIMIT characters")
 
         val possibleItems = items.filter { it.title == title }
         if(possibleItems.isNotEmpty()) throw IllegalArgumentEchoNoteException("Title must be unique")
@@ -67,6 +69,7 @@ class ItemModel(
 
     suspend fun changeTitle(id: Long, title: String) {
         if (title.isEmpty()) throw EmptyArgumentEchoNoteException("Title must not be empty")
+        if (title.length >= ITEM_TITLE_LIMIT) throw IllegalArgumentEchoNoteException("Item title must be under $ITEM_TITLE_LIMIT characters")
         val item = get(id)
 
         // Inside each folder, the title must be unique

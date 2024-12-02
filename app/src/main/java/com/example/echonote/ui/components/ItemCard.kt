@@ -61,8 +61,8 @@ fun ItemCard(item: Item, itemController: ItemController, navController: NavContr
                     itemController.invoke(ItemControllerEvent.RENAME, folder.id, id = itemId, title = it)
                 } catch(_: EmptyArgumentEchoNoteException) {
                     errorMessage = "Item name cannot be empty"
-                } catch (_: IllegalArgumentEchoNoteException) {
-                    errorMessage = "This title already exists."
+                } catch (e: IllegalArgumentEchoNoteException) {
+                    errorMessage = "${e.message}"
                 } catch (e: Exception) {
                     println(e)
                 }

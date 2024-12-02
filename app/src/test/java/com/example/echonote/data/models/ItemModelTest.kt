@@ -3,6 +3,7 @@ import com.example.echonote.data.persistence.MockPersistenceItem
 import com.example.echonote.dateTimeCreator
 import com.example.echonote.dateTimeCreator2
 import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.ITEM_TITLE_LIMIT
 import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import com.example.echonote.utils.NotFoundEchoNoteException
 import kotlinx.coroutines.test.runTest
@@ -39,6 +40,26 @@ class ItemModelTest {
             assert(false)
         } catch (_: IllegalArgumentEchoNoteException) {
             assertEquals(1, itemModel.items.count { it.title == "4 2" })
+            assertEquals(2, itemModel.items.size)
+        }
+    }
+
+    @Test
+    fun addTooLongTitle() = runTest {
+        val mockPersistence = MockPersistenceItem(::dateTimeCreator)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 2)
+        itemModel.init()
+        assertEquals(2, itemModel.items.size)
+        assertEquals(1, itemModel.items.count { it.title == "4 2" })
+        val char = "x"
+        val title = char.repeat(ITEM_TITLE_LIMIT)
+        assertEquals(0, itemModel.items.count { it.title == title })
+
+        try {
+            itemModel.add(title, Json.decodeFromString("""{"value":"test 5"}"""))
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(0, itemModel.items.count { it.title == title })
             assertEquals(2, itemModel.items.size)
         }
     }
@@ -167,6 +188,26 @@ class ItemModelTest {
             assert(false)
         } catch (_: IllegalArgumentEchoNoteException) {
             assertEquals(1, itemModel.items.count { it.title == "3 2" })
+            assertEquals(2, itemModel.items.size)
+        }
+    }
+
+    @Test
+    fun changeTitleTooLong() = runTest {
+        val mockPersistence = MockPersistenceItem(::dateTimeCreator)
+        val itemModel = ItemModel(mockPersistence, ::dateTimeCreator2, 2)
+        itemModel.init()
+        assertEquals(2, itemModel.items.size)
+        assertEquals(1, itemModel.items.count { it.title == "4 2" })
+        val char = "x"
+        val title = char.repeat(ITEM_TITLE_LIMIT)
+        assertEquals(0, itemModel.items.count { it.title == title })
+
+        try {
+            itemModel.changeTitle(4, title)
+            assert(false)
+        } catch (_: IllegalArgumentEchoNoteException) {
+            assertEquals(0, itemModel.items.count { it.title == title })
             assertEquals(2, itemModel.items.size)
         }
     }

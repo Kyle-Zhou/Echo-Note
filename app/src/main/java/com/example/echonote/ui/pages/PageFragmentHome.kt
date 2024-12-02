@@ -27,6 +27,8 @@ import com.example.echonote.ui.components.ErrorDialog
 import com.example.echonote.ui.components.FolderCard
 import com.example.echonote.ui.components.TextInputDialog
 import com.example.echonote.ui.models.ViewFolderModel
+import com.example.echonote.utils.EmptyArgumentEchoNoteException
+import com.example.echonote.utils.IllegalArgumentEchoNoteException
 import kotlinx.coroutines.launch
 
 // Utility to get the current time
@@ -92,6 +94,10 @@ fun HomePageScreen(navController: NavHostController, folderModel: FolderModel) {
                         } catch (e: IllegalArgumentException) {
                             println("Error when adding folder: $e")
                             errorMessage = "Title must be unique"
+                        } catch (_: EmptyArgumentEchoNoteException) {
+                            errorMessage = "Folder name cannot be empty"
+                        } catch (e: IllegalArgumentEchoNoteException) {
+                            errorMessage = "${e.message}"
                         } catch (e: Exception) {
                             println("Error creating: $e")
                         }
