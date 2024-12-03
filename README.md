@@ -25,6 +25,7 @@ Android/mobile
 ## Project Links
 - [Project Proposal](../../wikis/Project-Proposal)
 - [Design Proposal](../../wikis/Design-Proposal)
+- [Meeting Minutes](../../wikis/Meeting-Minutes)
 - [User Documentation](../../wikis/User-Documentation)
 
 ## Releases
