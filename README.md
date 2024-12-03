@@ -2,6 +2,13 @@
 
 EchoNote is a convenient mobile app designed to help students efficiently capture and organize information presented during lectures and office hours using AI.
 
+<div style="display: flex; justify-content: space-around; align-items: center;">
+    <img src="app/src/main/res/drawable/item.png" alt="item" width="200" />
+    <img src="pp/src/main/res/drawable/itemView.png" alt="itemView" width="200" />
+    <img src="pp/src/main/res/drawable/record.png" alt="record" width="200" />
+    <img src="pp/src/main/res/drawable/summarize.png" alt="summarize" width="200" />
+</div>
+
 ## Team Details
 
 #### Team Members
