@@ -33,16 +33,14 @@ Android/mobile
 - [Design Proposal](../../wikis/Design-Proposal)
 - [Meeting Minutes](../../wikis/Meeting-Minutes)
 - [User Documentation](../../wikis/User-Documentation)
+- [Design Diagrams](../../wikis/Design-Diagrams)
 
 ## Releases
 - [Version 1.1.0 Release](../../wikis/Version-1.1.0-Releases)
 - [Version 1.2.0 Release](../../wikis/Version-1.2.0-Releases)
 - [Version 1.3.0 Release](../../wikis/Version-1.3.0-Releases)
+- [Version 1.4.0 Release](../../wikis/Version-1.4.0-Releases-(Final-Release))
 
-## Planned Features
 
-## Versions
-
-## Acknowledgements
 
 
