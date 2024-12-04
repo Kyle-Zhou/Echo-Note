@@ -34,6 +34,7 @@ Android/mobile
 - [Meeting Minutes](../../wikis/Meeting-Minutes)
 - [User Documentation](../../wikis/User-Documentation)
 - [Design Diagrams](../../wikis/Design-Diagrams)
+- [Team Reflections](../../wikis/Team-Reflections)
 
 ## Releases
 - [Version 1.1.0 Release](../../wikis/Version-1.1.0-Releases)
