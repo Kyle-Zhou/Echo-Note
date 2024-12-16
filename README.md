@@ -20,22 +20,19 @@ EchoNote is a convenient mobile app designed to help students efficiently captur
     - Ensure the emulator is set up as mentioned above and start the pixel 9 simulator
     - Drag and drop the APK into the simulator screen
 
-## Usage
-
-
 ## Meta
 
-#### Project Links
-- [Project Proposal](../../wikis/Project-Proposal)
-- [Design Proposal](../../wikis/Design-Proposal)
-- [User Documentation](../../wikis/User-Documentation)
-- [Design Diagrams](../../wikis/Design-Diagrams)
+#### Wiki Links
+- [User Documentation](../../wiki/User-Documentation)
+- [Figma Diagram](../../wiki/Design-Diagrams#figma-prototypes)
+- [Class Diagram](../../wiki/Design-Diagrams#class-diagrams)
+- [Component Diagram](../../wiki/Design-Diagrams#high-level-component-diagram)
 
 #### Releases
-- [Version 1.1.0 Release](../../wikis/Version-1.1.0-Releases)
-- [Version 1.2.0 Release](../../wikis/Version-1.2.0-Releases)
-- [Version 1.3.0 Release](../../wikis/Version-1.3.0-Releases)
-- [Version 1.4.0 Release](../../wikis/Version-1.4.0-Releases-(Final-Release))
+- [Version 1.1.0 Pre-Release](../../releases/tag/v1.1.0-alpha)
+- [Version 1.2.0 Pre-Release](../../releases/tag/v1.2.0-alpha)
+- [Version 1.3.0 Pre-Release](../../releases/tag/v1.3.0-alpha)
+- [Version 1.4.0 Release](../../releases/tag/v1.4.0)
 
 #### Team Members
 - Andy Zhu - andy.zhu1@uwaterloo.ca  
